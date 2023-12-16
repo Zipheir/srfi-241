@@ -29,7 +29,7 @@
   (define ellipsis?
     (lambda (x)
       (and (identifier? x)
-	   (free-identifier=? x #'(... ...)))))
+           (free-identifier=? x #'(... ...)))))
 
     ;; Returns the length of the list prefix of x, which may be a
     ;; proper or improper list. If it is improper, the final element
