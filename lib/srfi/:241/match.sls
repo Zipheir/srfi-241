@@ -67,17 +67,16 @@
         (nongenerative) (sealed #t) (opaque #t)
         (fields proc-expr value-id* identifier))
 
+      (define repeated-pvar-error
+        (lambda (id)
+          (syntax-violation
+           who
+           "repeated pattern variable in match clause" stx id)))
+
       ;; Check *pvars* for repeated pattern variables.
       (define check-pattern-variables
         (lambda (pvars)
           (define ht (make-identifier-hashtable))
-
-          (define repeated-pvar-error
-            (lambda (id)
-              (syntax-violation
-               who
-               "repeated pattern variable in match clause" stx id)))
-
           (for-each
            (lambda (pvar)
              (let* ((id (pattern-variable-identifier pvar))
@@ -87,18 +86,17 @@
                (hashtable-update! ht id update #f)))
            pvars)))
 
+      (define repeated-cata-var-error
+        (lambda (id)
+          (syntax-violation who
+                            "repeated cata variable in match clause"
+                            stx
+                            id)))
+
       ;; Check *catas* for repeated cata variables.
       (define check-cata-bindings
         (lambda (catas)
           (define ht (make-identifier-hashtable))
-
-          (define repeated-cata-var-error
-            (lambda (id)
-              (syntax-violation who
-                                "repeated cata variable in match clause"
-                                stx
-                                id)))
-
           (for-each
            (lambda (cata)
              (for-each
@@ -120,12 +118,12 @@
             [_
              (syntax-violation who "ill-formed match clause" stx cl)])))
 
+      (define ill-formed-match-pattern-violation
+        (lambda (pat)
+          (syntax-violation who "ill-formed match pattern" stx pat)))
+
       (define gen-matcher
         (lambda (expr pat)
-          (define ill-formed-match-pattern-violation
-            (lambda ()
-              (syntax-violation who "ill-formed match pattern" stx pat)))
-
           (syntax-case pat (-> unquote)
             [,[f -> y ...]
              (for-all identifier? #'(y ...))
