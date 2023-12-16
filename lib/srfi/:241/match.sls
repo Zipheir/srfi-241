@@ -29,6 +29,8 @@
           (srfi :241 match helpers)
           (srfi :241 match quasiquote-transformer))
 
+  ;;; Helper procedures & syntax
+
   (define-syntax ->
     (lambda (stx)
       (syntax-violation '-> "invalid use of auxiliary syntax" stx)))
@@ -43,10 +45,20 @@
               succ)
             (fail)))))
 
+  (define who 'match)
+
+  (define make-identifier-hashtable
+    (lambda ()
+      (define identifier-hash
+        (lambda (id)
+          (assert (identifier? id))
+          (symbol-hash (syntax->datum id))))
+      (make-hashtable identifier-hash bound-identifier=?)))
+
+  ;;;; match
+
   (define-syntax match
     (lambda (stx)
-      (define who 'match)
-
       (define-record-type pattern-variable
         (nongenerative) (sealed #t) (opaque #t)
         (fields identifier expression level))
@@ -54,14 +66,6 @@
       (define-record-type cata-binding
         (nongenerative) (sealed #t) (opaque #t)
         (fields proc-expr value-id* identifier))
-
-      (define make-identifier-hashtable
-        (lambda ()
-          (define identifier-hash
-            (lambda (id)
-              (assert (identifier? id))
-              (symbol-hash (syntax->datum id))))
-          (make-hashtable identifier-hash bound-identifier=?)))
 
       (define check-pattern-variables
         (lambda (pvars)
