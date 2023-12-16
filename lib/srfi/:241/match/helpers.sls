@@ -32,19 +32,19 @@
 	   (free-identifier=? x #'(... ...)))))
 
     (define length+
-    (lambda (x)
-      (let f ([x x] [y x] [n 0])
-        (if (pair? x)
-            (let ([x (cdr x)]
-                  [n (+ n 1)])
-              (if (pair? x)
-                  (let ([x (cdr x)]
-                        [y (cdr y)]
-                        [n (+ n 1)])
-                    (and (not (eq? x y))
-                         (f x y n)))
-                  n))
-            n))))
+      (lambda (x)
+        (let f ([x x] [y x] [n 0])
+          (if (pair? x)
+              (let ([x (cdr x)]
+                    [n (+ n 1)])
+                (if (pair? x)
+                    (let ([x (cdr x)]
+                          [y (cdr y)]
+                          [n (+ n 1)])
+                      (and (not (eq? x y))
+                           (f x y n)))
+                    n))
+              n))))
 
   (define split-at
     (lambda (ls k)
