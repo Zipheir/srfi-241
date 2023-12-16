@@ -302,7 +302,3 @@
              #,(gen-match #'k #'(cl ...)))])))
 
   )
-
-;; Local Variables:
-;; mode: scheme
-;; End:
