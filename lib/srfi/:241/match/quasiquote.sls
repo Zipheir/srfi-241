@@ -32,7 +32,3 @@
     quasiquote-transformer)
 
   )
-
-;; Local Variables:
-;; mode: scheme
-;; End:

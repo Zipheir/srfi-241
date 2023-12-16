@@ -214,7 +214,3 @@
                             arg*)))))))
 
   )
-
-;; Local Variables:
-;; mode: scheme
-;; End:
