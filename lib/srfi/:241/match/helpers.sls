@@ -23,7 +23,7 @@
 ;; SOFTWARE.
 
 (library (srfi :241 match helpers)
-  (export ellipsis? length+ split-at)
+  (export ellipsis? cons-length split-at)
   (import (rnrs))
 
   (define ellipsis?
@@ -31,9 +31,13 @@
       (and (identifier? x)
 	   (free-identifier=? x #'(... ...)))))
 
-    (define length+
+    ;; Returns the length of the list prefix of x, which may be a
+    ;; proper or improper list. If it is improper, the final element
+    ;; is not included in the length calculation. If x is circular,
+    ;; an exception is raised.
+    (define cons-length
       (lambda (x)
-        (let f ([x x] [y x] [n 0])
+        (let loop ([x x] [y x] [n 0])
           (if (pair? x)
               (let ([x (cdr x)]
                     [n (+ n 1)])
@@ -41,8 +45,11 @@
                     (let ([x (cdr x)]
                           [y (cdr y)]
                           [n (+ n 1)])
-                      (and (not (eq? x y))
-                           (f x y n)))
+                      (if (eq? x y)
+                          (assertion-violation 'cons-length
+                                               "circular list")
+
+                          (loop x y n)))
                     n))
               n))))
 
