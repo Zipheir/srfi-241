@@ -63,7 +63,7 @@
 
       (define-record-type cata-binding
         (nongenerative) (sealed #t) (opaque #t)
-        (fields proc-expr value-id* identifier))
+        (fields proc-expr value-ids identifier))
 
       (define repeated-pvar-error
         (lambda (id)
@@ -100,7 +100,7 @@
 				(when val (repeated-cata-var-error id))
 				#t)))
 		  (hashtable-update! ht id update #f)))
-	      (cata-binding-value-id* cata)))
+	      (cata-binding-value-ids cata)))
 	   catas)))
 
       ;; Splits a match clause into pattern, guard, and body components,
@@ -276,7 +276,7 @@
 			[(f ...)
 			 (map cata-binding-proc-expr catas)]
 			[((y ...) ...)
-			 (map cata-binding-value-id* catas)]
+			 (map cata-binding-value-ids catas)]
 			[(z ...)
 			 (map cata-binding-identifier catas)]
 			[(tmp ...)
