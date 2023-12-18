@@ -260,15 +260,15 @@
 					#,(f (- n 1))])
 			    (f e* (cons tmp tmps) ...)))))))))
 
-      (define (gen-clause k cl)
+      (define (gen-clause key clause)
 	(let*-values ([(pat guard-expr body)
-		       (parse-clause cl)]
+		       (parse-clause clause)]
 		      [(matcher pvars catas)
-		       (gen-matcher #'e pat)])
+		       (gen-matcher #'expr-val pat)])
 	  (check-pattern-variables pvars)
 	  (check-cata-bindings catas)
 	  (with-syntax ([quasiquote
-			 (datum->syntax k 'quasiquote)]
+			 (datum->syntax key 'quasiquote)]
 			[(x ...)
 			 (map pattern-variable-identifier pvars)]
 			[(u ...)
@@ -303,17 +303,17 @@
 			       #,@body)))
 			 (fail)))))))))
 
-      (define (gen-match k cl*)
+      (define (gen-match key clauses)
 	(fold-right
 	 (lambda (cl rest)
 	   #`(let ([fail (lambda () #,rest)])
-	       #,(gen-clause k cl)))
-	 #'(assertion-violation 'who "value does not match" e)
-	 cl*))
+	       #,(gen-clause key cl)))
+	 #'(assertion-violation 'who "value does not match" expr-val)
+	 clauses))
 
       (syntax-case stx ()
-        [(k expr cl ...)
-         #`(let loop ([e expr])
-             #,(gen-match #'k #'(cl ...)))])))
+        [(key expr clause ...)
+         #`(let loop ([expr-val expr])
+             #,(gen-match #'key #'(clause ...)))])))
 
   )
