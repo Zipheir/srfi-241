@@ -108,6 +108,8 @@
 		(cata-binding-value-id* cata)))
 	     catas))))
 
+      ;; Splits a match clause into pattern, guard, and body components,
+      ;; then returns those as multiple values.
       (define parse-clause
         (lambda (cl)
           (syntax-case cl (guard)
