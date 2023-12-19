@@ -122,7 +122,7 @@
       ;; *pat*.
       (define (gen-matcher expr pat)
         (syntax-case pat (-> unquote)
-          [,[f -> y ...]
+          [,[f -> y ...]     ; Cata pattern with operator.
            (for-all identifier? #'(y ...))
            (with-syntax ([(x) (generate-temporaries '(x))])
              (values
@@ -130,7 +130,7 @@
                 (k))
               (list (make-pattern-variable #'x expr 0))
               (list (make-cata-binding #'f #'(y ...) #'x))))]
-          [,[y ...]
+          [,[y ...]          ; Cata pattern.
            (for-all identifier? #'(y ...))
            (with-syntax ([(x) (generate-temporaries '(x))])
              (values
@@ -138,7 +138,7 @@
                 (k))
               (list (make-pattern-variable #'x expr 0))
               (list (make-cata-binding #'loop #'(y ...) #'x))))]
-          [(pat1 ell pat2 ... . pat3)
+          [(pat1 ell pat2 ... . pat3)  ; Ellipsis pattern.
            (ellipsis? #'ell)
            (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
           [,x
@@ -164,7 +164,7 @@
                 (append pvars1 pvars2) (append catas1 catas2))))]
           [unquote
            (ill-formed-match-pattern-violation)]
-          [_
+          [_         ; Constant.
            (values
             (lambda (k)
               #`(if (equal? #,expr '#,pat)
