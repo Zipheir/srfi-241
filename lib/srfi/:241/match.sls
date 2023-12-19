@@ -61,11 +61,15 @@
     (lambda (stx)
       (define-record-type pattern-variable
         (nongenerative) (sealed #t) (opaque #t)
-        (fields identifier expression level))
+        (fields identifier   ; The pattern variable's name.
+                expression   ; The expression it's bound to.
+                level))      ; ?
 
       (define-record-type cata-binding
         (nongenerative) (sealed #t) (opaque #t)
-        (fields proc-expr value-ids identifier))
+        (fields proc-expr    ; The catamorphism operator.
+                value-ids    ; The identifiers bound to the results.
+                identifier)) ; The cata variable's name (hidden).
 
       (define repeated-pvar-error
         (lambda (id)
