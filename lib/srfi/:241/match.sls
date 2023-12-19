@@ -39,9 +39,9 @@
     (let ([n (cons-length obj)])
       (if (<= k n)
 	  (call-with-values
-	      (lambda ()
-		(split-at obj (- n k)))
-	    succ)
+	   (lambda ()
+	     (split-at obj (- n k)))
+	   succ)
 	  (fail))))
 
   (define who 'match)
