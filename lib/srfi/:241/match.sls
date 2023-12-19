@@ -117,6 +117,9 @@
       (define (ill-formed-match-pattern-violation pat)
         (syntax-violation who "ill-formed match pattern" stx pat))
 
+      ;; Construct and return a matcher procedure, a list of pattern
+      ;; variables, and a list of cata variables for matching *expr* to
+      ;; *pat*.
       (define (gen-matcher expr pat)
 	(syntax-case pat (-> unquote)
 	  [,[f -> y ...]
