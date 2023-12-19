@@ -1,6 +1,7 @@
 #!r6rs
 
 ;; Copyright (C) Marc Nieper-Wißkirchen (2022).  All Rights Reserved.
+;; Copyright (C) Wolfgang Corcoran-Mathe (2023)
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
