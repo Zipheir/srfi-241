@@ -158,7 +158,7 @@
       ;; with name *id* to the value of *expr*.
       (define (gen-variable-matcher expr id)
         (values invoke
-                (list (make-pattern-variable #'x expr 0))
+                (list (make-pattern-variable #'id expr 0))
                 '()))
 
       ;; Build a matcher which matches *expr* against the literal
