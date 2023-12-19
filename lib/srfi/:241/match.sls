@@ -53,6 +53,8 @@
              (symbol-hash (syntax->datum id)))))
       (make-hashtable identifier-hash bound-identifier=?)))
 
+  (define (invoke cont) (cont))
+
   ;;;; match
 
   (define-syntax match
@@ -126,16 +128,14 @@
            (for-all identifier? #'(y ...))
            (with-syntax ([(x) (generate-temporaries '(x))])
              (values
-              (lambda (k)
-                (k))
+              invoke
               (list (make-pattern-variable #'x expr 0))
               (list (make-cata-binding #'f #'(y ...) #'x))))]
           [,[y ...]          ; Cata pattern.
            (for-all identifier? #'(y ...))
            (with-syntax ([(x) (generate-temporaries '(x))])
              (values
-              (lambda (k)
-                (k))
+              invoke
               (list (make-pattern-variable #'x expr 0))
               (list (make-cata-binding #'loop #'(y ...) #'x))))]
           [(pat1 ell pat2 ... . pat3)  ; Ellipsis pattern.
@@ -144,8 +144,7 @@
           [,x
            (identifier? #'x)
            (values
-            (lambda (k)
-              (k))
+            invoke
             (list (make-pattern-variable #'x expr 0))
             '())]
           [(pat1 . pat2)
