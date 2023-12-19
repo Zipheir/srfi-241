@@ -138,6 +138,9 @@
           [(pat1 ell pat2 ... . pat3)  ; Ellipsis pattern.
            (ellipsis? #'ell)
            (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
+          [,u
+           (underscore? #'u)
+           (values invoke '() '())]
           [,x
            (identifier? #'x)
            (gen-variable-matcher expr #'x)]
@@ -158,9 +161,7 @@
       ;; with name *id* to the value of *expr*.
       (define (gen-variable-matcher expr id)
         (values invoke
-                (if (free-identifier=? #'id _)
-                    '()  ; Don't bind anything to the _ dummy var.
-                    (list (make-pattern-variable #'id expr 0)))
+                (list (make-pattern-variable #'id expr 0))
                 '()))
 
       ;; Build a matcher which matches *expr* against the literal

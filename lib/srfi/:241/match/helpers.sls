@@ -24,12 +24,16 @@
 ;; SOFTWARE.
 
 (library (srfi :241 match helpers)
-  (export ellipsis? cons-length split-at)
+  (export ellipsis? cons-length split-at underscore?)
   (import (rnrs))
 
   (define (ellipsis? x)
     (and (identifier? x)
 	 (free-identifier=? x #'(... ...))))
+
+  (define (underscore? x)
+    (and (identifier? x)
+         (free-identifier=? x #'_)))
 
     ;; Returns the length of the list prefix of x, which may be a
     ;; proper or improper list. If it is improper, the final element
