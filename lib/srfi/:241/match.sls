@@ -139,10 +139,7 @@
            (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
           [,x
            (identifier? #'x)
-           (values
-            invoke
-            (list (make-pattern-variable #'x expr 0))
-            '())]
+           (gen-variable-matcher expr #'x)]
           [(pat1 . pat2) (gen-cons-matcher #'expr #'pat1 #'pat2))
           [unquote (ill-formed-match-pattern-violation)]
           [_ (gen-constant-matcher #'expr #'pat)])
@@ -155,6 +152,13 @@
            invoke
            (list (make-pattern-variable #'x expr 0))
            (list (make-cata-binding #'op #'(y ...) #'x)))))
+
+      ;; Build a simple matcher which binds the pattern variable
+      ;; with name *id* to the value of *expr*.
+      (define (gen-variable-matcher expr id)
+        (values invoke
+                (list (make-pattern-variable #'x expr 0))
+                '()))
 
       ;; Build a matcher which matches *expr* against the literal
       ;; pattern *pat*.
