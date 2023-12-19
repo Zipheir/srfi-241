@@ -160,20 +160,20 @@
                            [(mat2 pvars2 catas2)
                             (gen-matcher #'e2 #'pat2)])
                (values
-                (lambda (k)     ; Combine matchers.
+                (lambda (succeed)     ; Combine matchers.
                   #`(if (pair? #,expr)
                         (let ([e1 (car #,expr)]
                               [e2 (cdr #,expr)])
-                          #,(mat1 (lambda () (mat2 k))))
+                          #,(mat1 (lambda () (mat2 succeed))))
                         (fail)))
                 (append pvars1 pvars2) (append catas1 catas2))))]
           [unquote
            (ill-formed-match-pattern-violation)]
           [_         ; Constant pattern.
            (values
-            (lambda (k)
+            (lambda (succeed)
               #`(if (equal? #,expr '#,pat)
-                    #,(k)
+                    #,(succeed)
                     (fail)))
             '() '())]))
 
@@ -184,12 +184,12 @@
                         [(mat2 pvars2 catas2)
                          (gen-matcher* #'e2 (append pat2* pat3))])
             (values
-             (lambda (k)
+             (lambda (succeed)
                #`(split
                   #,expr
                   #,(length pat2*)
                   (lambda (e1 e2)
-                    #,(mat1 (lambda () (mat2 k))))
+                    #,(mat1 (lambda () (mat2 succeed))))
                   fail))
              (append pvars1 pvars2)
              (append catas1 catas2)))))
@@ -198,9 +198,9 @@
         (syntax-case pat* (unquote)
           [()
            (values
-            (lambda (k)
+            (lambda (succeed)
               #`(if (null? #,expr)
-                    #,(k)
+                    #,(succeed)
                     (fail)))
             '() '())]
           [,x
@@ -212,12 +212,12 @@
                            [(mat2 pvars2 catas2)
                             (gen-matcher* #'e2 #'pat*)])
                (values
-                (lambda (k)
+                (lambda (succeed)
                   #`(let ([e1 (car #,expr)]
                           [e2 (cdr #,expr)])
                       #,(mat1
                          (lambda ()
-                           (mat2 k)))))
+                           (mat2 succeed)))))
                 (append pvars1 pvars2)
                 (append catas1 catas2))))]
           [_
@@ -232,11 +232,11 @@
                           [(v ...)
                            (map pattern-variable-expression ipvars)])
               (values
-               (lambda (k)
+               (lambda (succeed)
                  #`(let f ([e2 (reverse #,expr)]
                            [u '()] ...)
                      (if (null? e2)
-                         #,(k)
+                         #,(succeed)
                          (let ([e1 (car e2)])
                            #,(mat (lambda ()
                                     #`(f (cdr e2) (cons v u) ...)))))))
