@@ -130,18 +130,10 @@
         (syntax-case pat (-> unquote)
           [,[f -> y ...]     ; Cata pattern with operator.
            (for-all identifier? #'(y ...))
-           (with-syntax ([(x) (generate-temporaries '(x))])
-             (values
-              invoke
-              (list (make-pattern-variable #'x expr 0))
-              (list (make-cata-binding #'f #'(y ...) #'x))))]
+           (gen-cata-matcher expr #'f #'(y ...))]
           [,[y ...]          ; Cata pattern.
            (for-all identifier? #'(y ...))
-           (with-syntax ([(x) (generate-temporaries '(x))])
-             (values
-              invoke
-              (list (make-pattern-variable #'x expr 0))
-              (list (make-cata-binding #'loop #'(y ...) #'x))))]
+           (gen-cata-matcher expr #'loop #'(y ...))]
           [(pat1 ell pat2 ... . pat3)  ; Ellipsis pattern.
            (ellipsis? #'ell)
            (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
@@ -152,15 +144,28 @@
             (list (make-pattern-variable #'x expr 0))
             '())]
           [(pat1 . pat2) (gen-cons-matcher #'expr #'pat1 #'pat2))
-          [unquote
-           (ill-formed-match-pattern-violation)]
-          [_         ; Constant pattern.
-           (values
-            (lambda (succeed)
-              #`(if (equal? #,expr '#,pat)
-                    #,(succeed)
-                    (fail)))
-            '() '())]))
+          [unquote (ill-formed-match-pattern-violation)]
+          [_ (gen-constant-matcher #'expr #'pat)])
+
+      ;; Build a catamorphism matcher which recursively applies
+      ;; *op* and binds the results to the *ids*.
+      (define (gen-cata-matcher expr op ids)
+        (with-syntax ([(x) (generate-temporaries '(x))])
+          (values
+           invoke
+           (list (make-pattern-variable #'x expr 0))
+           (list (make-cata-binding #'op #'(y ...) #'x)))))
+
+      ;; Build a matcher which matches *expr* against the literal
+      ;; pattern *pat*.
+      (define (gen-constant-matcher expr pat)
+        (values
+         (lambda (succeed)
+           #`(if (equal? #,expr '#,pat)
+                  #,(succeed)
+                  (fail)))
+         '()
+         '()))
 
       ;; Build a matcher which matches the head of *expr* against
       ;; *car-pat* and its tail against *cdr-pat*.
