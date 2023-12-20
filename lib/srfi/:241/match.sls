@@ -206,7 +206,7 @@
                          (gen-map #'e1 ell-pat)]
                         [(rest-pats) (append body-pats tail-pat)]
                         [(tail-match tail-pvars tail-catas)
-                         (gen-matcher* #'e2 rest-pats)])
+                         (gen-list-matcher #'e2 rest-pats)])
             (values
              (lambda (succeed)
                #`(split-cps
@@ -218,24 +218,27 @@
              (append head-pvars tail-pvars)
              (append head-catas tail-catas)))))
 
-      (define (gen-matcher* expr pat*)
-        (syntax-case pat* (unquote)
+      ;; Build a matcher for *expr* from a proper or improper list
+      ;; of patterns.
+      (define (gen-list-matcher expr pats)
+        (syntax-case pats (unquote)
           [()
            (values
             (lambda (succeed)
               #`(if (null? #,expr)
                     #,(succeed)
                     (fail)))
-            '() '())]
-          [,x
-           (gen-matcher expr pat*)]
-          [(pat . pat*)
+            '()
+            '())]
+          [,x  ; Tail of an improper list.
+           (gen-variable-matcher expr pats)]
+          [(pat . pats)
            (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
              (let*-values ([(mat1 pvars1 catas1)
                             (gen-matcher #'e1 #'pat)]
                            [(mat2 pvars2 catas2)
-                            (gen-matcher* #'e2 #'pat*)])
-               (values
+                            (gen-list-matcher #'e2 #'pat*)])  ; recur
+               (values  ; combine head & tail matchers
                 (lambda (succeed)
                   #`(let ([e1 (car #,expr)]
                           [e2 (cdr #,expr)])
@@ -244,8 +247,8 @@
                            (mat2 succeed)))))
                 (append pvars1 pvars2)
                 (append catas1 catas2))))]
-          [_
-           (gen-matcher expr pat*)]))
+          [_  ; pass the buck
+           (gen-matcher expr pats)]))
 
       (define (gen-map expr pat)
         (with-syntax ([(e1 e2 f) (generate-temporaries '(e1 e2 f))])
