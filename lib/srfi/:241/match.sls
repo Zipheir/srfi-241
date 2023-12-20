@@ -144,7 +144,7 @@
           [,x
            (identifier? #'x)
            (gen-variable-matcher expr #'x)]
-          [(pat1 . pat2) (gen-cons-matcher #'expr #'pat1 #'pat2))
+          [(pat1 . pat2) (gen-pair-matcher #'expr #'pat1 #'pat2))
           [unquote (ill-formed-match-pattern-violation)]
           [_ (gen-constant-matcher #'expr #'pat)])
 
@@ -177,7 +177,7 @@
 
       ;; Build a matcher which matches the head of *expr* against
       ;; *car-pat* and its tail against *cdr-pat*.
-      (define (gen-cons-matcher expr car-pat cdr-pat)
+      (define (gen-pair-matcher expr car-pat cdr-pat)
         ;; Temporary expression values for the head & tail matchers.
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           ;; Build head & tail matchers.
