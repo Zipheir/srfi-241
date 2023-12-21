@@ -274,7 +274,7 @@
                   (make-pattern-variable
                    (pattern-variable-identifier pvar)
                    id
-                   (+ (pattern-variable-level pvar) 1)))
+                   (+ (pattern-variable-level pvar) 1)))  ; why increment?
                 #'(u ...)
                 ipvars)
                catas)))))
