@@ -251,7 +251,7 @@
 
       (define (gen-map expr pat)
         (with-syntax ([(e1 e2 f) (generate-temporaries '(e1 e2 f))])
-          (let-values ([(mat ipvars catas)
+          (let-values ([(matcher ipvars catas)
                         (gen-matcher #'e1 pat)])
             (with-syntax ([(u ...)
                            (generate-temporaries ipvars)]
@@ -264,8 +264,9 @@
                      (if (null? e2)
                          #,(succeed)
                          (let ([e1 (car e2)])
-                           #,(mat (lambda ()
-                                    #`(f (cdr e2) (cons v u) ...)))))))
+                           #,(matcher
+                              (lambda ()
+                                #`(f (cdr e2) (cons v u) ...)))))))
                (map
                 (lambda (id pvar)
                   (make-pattern-variable
