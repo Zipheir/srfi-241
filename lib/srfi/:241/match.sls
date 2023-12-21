@@ -325,17 +325,9 @@
                         [(tmp ...)
                          (generate-temporaries catas)])
             (with-syntax ([(e ...)
-                           (map
-                            (lambda (tmp ys z)
-                              (let ([n
-                                     (exists
-                                      (lambda (pvar)
-                                        (let ([id (pattern-variable-identifier pvar)])
-                                          (and (bound-identifier=? id z)
-                                               (pattern-variable-level pvar))))
-                                      pvars)])
-                                (gen-cata-values tmp ys z n)))
-                            #'(tmp ...) #'((y ...) ...) #'(z ...))])
+                           (extract-cata-values #'(tmp ...)
+                                                #'((y ...) ...)
+                                                #'(z ...))])
               (matcher
                (lambda ()
                  #`(let ([x u] ...)
@@ -345,6 +337,21 @@
                              (let-syntax ([quasiquote quasiquote-transformer])
                                #,@body)))
                          (fail)))))))))
+
+      (define (extract-cata-values pvars tmps val-ids bind-ids)
+        (define (binding-id-level z)
+          (exists (lambda (pvar)
+                    (let ([id (pattern-variable-identifier pvar)])
+                      (and (bound-identifier=? id z)
+                           (pattern-variable-level pvar))))
+                  pvars))
+
+        (map (lambda (tmp ys z)
+               (let ([n (binding-id-level z pvars)])
+                 (gen-cata-values tmp ys z n)))
+             tmps
+             val-ids
+             bind-ids))
 
       ;; Parse each *clause* and combine the results into a single
       ;; matcher. This binds the 'fail' continuations which are used
