@@ -203,7 +203,7 @@
       (define (gen-ellipsis-matcher expr ell-pat body-pats tail-pat)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           (let*-values ([(head-match head-pvars head-catas)
-                         (gen-glob-matcher #'e1 ell-pat)]
+                         (gen-map #'e1 ell-pat)]
                         [(rest-pats) (append body-pats tail-pat)]
                         [(tail-match tail-pvars tail-catas)
                          (gen-list-matcher #'e2 rest-pats)])
@@ -249,8 +249,7 @@
               #,(succeed)
               (fail)))
 
-      ;; Build a matcher for the ellipsized pattern *pat*.
-      (define (gen-glob-matcher expr pat)
+      (define (gen-map expr pat)
         (with-syntax ([(e1 e2 f) (generate-temporaries '(e1 e2 f))])
           (let-values ([(matcher ipvars catas)
                         (gen-matcher #'e1 pat)])
