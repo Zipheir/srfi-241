@@ -78,29 +78,30 @@
 
       ;; Check *pvars* for repeated pattern variables.
       (define (check-pattern-variables pvars)
-	(let ((ht (make-identifier-hashtable)))
-	  (for-each
-	   (lambda (pvar)
-	     (let* ((id (pattern-variable-identifier pvar))
-		    (update (lambda (val)
-			      (when val (repeated-pvar-error id))
-			      #t)))
-	       (hashtable-update! ht id update #f)))
-	   pvars)))
+        (let ((ht (make-identifier-hashtable)))
+          (for-each
+           (lambda (pvar)
+             (let* ((id (pattern-variable-identifier pvar))
+                    (update (lambda (val)
+                              (when val (repeated-pvar-error stx id))
+                              #t)))
+               (hashtable-update! ht id update #f)))
+           pvars)))
 
       ;; Check *catas* for repeated cata variables.
       (define (check-cata-bindings catas)
-	(let ((ht (make-identifier-hashtable)))
-	  (for-each
-	   (lambda (cata)
-	     (for-each
-	      (lambda (id)
-		(let ((update (lambda (val)
-				(when val (repeated-cata-var-error id))
-				#t)))
-		  (hashtable-update! ht id update #f)))
-	      (cata-binding-value-ids cata)))
-	   catas)))
+        (let ((ht (make-identifier-hashtable)))
+          (for-each
+           (lambda (cata)
+             (for-each
+              (lambda (id)
+                (let ((update
+                       (lambda (val)
+                         (when val (repeated-cata-var-error stx id))
+                         #t)))
+                  (hashtable-update! ht id update #f)))
+              (cata-binding-value-ids cata)))
+           catas)))
 
       ;; Splits a match clause into pattern, guard, and body components,
       ;; then returns those as multiple values.
