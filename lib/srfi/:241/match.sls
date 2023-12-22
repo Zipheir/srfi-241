@@ -229,7 +229,7 @@
              (let*-values ([(mat1 pvars1 catas1)
                             (gen-matcher #'e1 #'pat)]
                            [(mat2 pvars2 catas2)
-                            (gen-list-matcher #'e2 #'pat*)])  ; recur
+                            (gen-list-matcher #'e2 #'pats)])  ; recur
                (values  ; combine head & tail matchers
                 (lambda (succeed)
                   #`(let ([e1 (car #,expr)]
