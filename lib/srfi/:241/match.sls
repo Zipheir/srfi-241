@@ -53,6 +53,17 @@
              (symbol-hash (syntax->datum id)))))
       (make-hashtable identifier-hash bound-identifier=?)))
 
+  (define (repeated-pvar-error stx id)
+    (syntax-violation
+     who
+     "repeated pattern variable in match clause" stx id))
+
+  (define (repeated-cata-var-error stx id)
+    (syntax-violation who
+                      "repeated cata variable in match clause"
+                      stx
+                      id))
+
   ;;;; match
 
   (define-syntax match
@@ -65,12 +76,6 @@
         (nongenerative) (sealed #t) (opaque #t)
         (fields proc-expr value-ids identifier))
 
-      (define repeated-pvar-error
-        (lambda (id)
-          (syntax-violation
-           who
-           "repeated pattern variable in match clause" stx id)))
-
       ;; Check *pvars* for repeated pattern variables.
       (define (check-pattern-variables pvars)
 	(let ((ht (make-identifier-hashtable)))
@@ -82,12 +87,6 @@
 			      #t)))
 	       (hashtable-update! ht id update #f)))
 	   pvars)))
-
-      (define (repeated-cata-var-error id)
-	(syntax-violation who
-			  "repeated cata variable in match clause"
-			  stx
-			  id))
 
       ;; Check *catas* for repeated cata variables.
       (define (check-cata-bindings catas)
