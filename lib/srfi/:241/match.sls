@@ -279,24 +279,24 @@
                 ipvars)
                catas)))))
 
-      (define (gen-cata-values proc-expr cata-val-ids bind-id level)
-        (let gen-loop ([level level])
-          (if (zero? level)
-              #`(#,proc-expr #,bind-id)
+      (define (gen-cata-values proc-expr y* e n)
+        (let f ([n n])
+          (if (zero? n)
+              #`(#,proc-expr #,e)
               (with-syntax ([(tmps ...)
-                             (generate-temporaries cata-val-ids)]
+                             (generate-temporaries y*)]
                             [(tmp ...)
-                             (generate-temporaries cata-val-ids)]
-                            [bind-id bind-id])
-                #`(let loop ([e* (reverse bind-id)]
-                             [tmps '()] ...)
+                             (generate-temporaries y*)]
+                            [e e])
+                #`(let f ([e* (reverse e)]
+                          [tmps '()] ...)
                     (if (null? e*)
                         (values tmps ...)
                         (let ([e (car e*)]
                               [e* (cdr e*)])
                           (let-values ([(tmp ...)
-                                        #,(gen-loop (- level 1))])
-                            (loop e* (cons tmp tmps) ...)))))))))
+                                        #,(f (- n 1))])
+                            (f e* (cons tmp tmps) ...)))))))))
 
       (define (gen-clause key clause)
         (let*-values ([(pat guard-expr body)
