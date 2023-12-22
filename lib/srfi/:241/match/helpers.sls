@@ -53,8 +53,6 @@
                     n))
               n))))
 
-  ;; Splits the list ls at index k, returning a list of the first k
-  ;; elements, and the remaining tail.
   (define split-at
     (lambda (ls k)
       (let f ([ls ls] [k k])
