@@ -195,28 +195,22 @@
              (append car-pvars cdr-pvars)
              (append car-catas cdr-catas)))))
 
-      ;; Build a matcher which matches *expr* against the pattern
-      ;;
-      ;;     (ell-pat ... body-pat0 ::: body-patN . tail-pat)
-      ;;
-      ;; where body-pats = (body-pat0 ::: body-patN).
-      (define (gen-ellipsis-matcher expr ell-pat body-pats tail-pat)
+      (define (gen-ellipsis-matcher expr pat1 pat2* pat3)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
-          (let*-values ([(head-match head-pvars head-catas)
-                         (gen-map #'e1 ell-pat)]
-                        [(rest-pats) (append body-pats tail-pat)]
-                        [(tail-match tail-pvars tail-catas)
-                         (gen-matcher* #'e2 rest-pats)])
+          (let*-values ([(mat1 pvars1 catas1)
+                         (gen-map #'e1 pat1)]
+                        [(mat2 pvars2 catas2)
+                         (gen-matcher* #'e2 (append pat2* pat3))])
             (values
              (lambda (succeed)
                #`(split-cps
                   #,expr
-                  #,(length body-pats)
+                  #,(length pat2*)
                   (lambda (e1 e2)
-                    #,(head-match (lambda () (tail-match succeed))))
+                    #,(mat1 (lambda () (mat2 succeed))))
                   fail))
-             (append head-pvars tail-pvars)
-             (append head-catas tail-catas)))))
+             (append pvars1 pvars2)
+             (append catas1 catas2)))))
 
       (define (gen-matcher* expr pat*)
         (syntax-case pat* (unquote)
