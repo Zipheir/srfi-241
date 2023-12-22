@@ -36,7 +36,7 @@
     (lambda (stx)
       (syntax-violation '-> "invalid use of auxiliary syntax" stx)))
 
-  (define (split-cps obj k succ fail)
+  (define (split obj k succ fail)
     (let ([n (cons-length obj)])
       (if (<= k n)
           (call-with-values
@@ -203,7 +203,7 @@
                          (gen-matcher* #'e2 (append pat2* pat3))])
             (values
              (lambda (succeed)
-               #`(split-cps
+               #`(split
                   #,expr
                   #,(length pat2*)
                   (lambda (e1 e2)
