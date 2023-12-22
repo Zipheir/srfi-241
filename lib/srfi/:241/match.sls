@@ -221,7 +221,7 @@
       ;; of patterns.
       (define (gen-list-matcher expr pats)
         (syntax-case pats (unquote)
-          [() (values null-matcher '() '())]
+          [() (values (null-matcher expr) '() '())]
           [,x  ; Tail of an improper list.
            (gen-variable-matcher expr pats)]
           [(pat . pats)
@@ -243,10 +243,11 @@
            (gen-matcher expr pats)]))
 
       ;; Matcher for the empty list.
-      (define (null-matcher succeed)
-        #`(if (null? #,expr)
-              #,(succeed)
-              (fail)))
+      (define (null-matcher expr)
+        (lambda (succeed)
+          #`(if (null? #,expr)
+                #,(succeed)
+                (fail))))
 
       ;; Build a matcher for the ellipsized pattern *pat*.
       (define (gen-glob-matcher expr pat)
