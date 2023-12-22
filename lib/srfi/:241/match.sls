@@ -279,7 +279,7 @@
                 ipvars)
                catas)))))
 
-      (define (gen-cata-values proc-expr y* e n)
+      (define (gen-map-values proc-expr y* e n)
         (let f ([n n])
           (if (zero? n)
               #`(#,proc-expr #,e)
@@ -329,7 +329,7 @@
                                           (and (bound-identifier=? id z)
                                                (pattern-variable-level pvar))))
                                       pvars)])
-                                (gen-cata-values tmp ys z n)))
+                                (gen-map-values tmp ys z n)))
                             #'(tmp ...) #'((y ...) ...) #'(z ...))])
               (matcher
                (lambda ()
