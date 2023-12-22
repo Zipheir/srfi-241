@@ -259,7 +259,6 @@
                           [(v ...)
                            (map pattern-variable-expression ipvars)])
               (values
-               ;; Matches each element of the list expr against pat.
                (lambda (succeed)
                  #`(let loop ([e2 (reverse #,expr)]
                               [u '()] ...)
@@ -275,8 +274,7 @@
                    (pattern-variable-identifier pvar)
                    id
                    (+ (pattern-variable-level pvar) 1)))
-                #'(u ...)
-                ipvars)
+                #'(u ...) ipvars)
                catas)))))
 
       (define (gen-map-values proc-expr y* e n)
