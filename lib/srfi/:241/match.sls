@@ -30,35 +30,36 @@
           (srfi :241 match helpers)
           (srfi :241 match quasiquote-transformer))
 
+  ;;; Helper procedures & syntax
+
   (define-syntax ->
     (lambda (stx)
       (syntax-violation '-> "invalid use of auxiliary syntax" stx)))
+
+  (define (split-cps obj k succ fail)
+    (let ([n (cons-length obj)])
+      (if (<= k n)
+          (call-with-values
+           (lambda ()
+             (split-at obj (- n k)))
+           succ)
+          (fail))))
+
+  (define who 'match)
+
+  (define (make-identifier-hashtable)
+    (let ((identifier-hash
+           (lambda (id)
+             (assert (identifier? id))
+             (symbol-hash (syntax->datum id)))))
+      (make-hashtable identifier-hash bound-identifier=?)))
+
+  (define (invoke cont) (cont))
 
   ;;;; match
 
   (define-syntax match
     (lambda (stx)
-      ;;; Helper procedures & syntax
-      (define who 'match)
-
-      (define (split-cps obj k succ fail)
-        (let ([n (cons-length obj)])
-          (if (<= k n)
-              (call-with-values
-               (lambda ()
-                 (split-at obj (- n k)))
-               succ)
-              (fail))))
-
-      (define (make-identifier-hashtable)
-        (let ((identifier-hash
-               (lambda (id)
-                 (assert (identifier? id))
-                 (symbol-hash (syntax->datum id)))))
-          (make-hashtable identifier-hash bound-identifier=?)))
-
-      (define (invoke cont) (cont))
-
       (define-record-type pattern-variable
         (nongenerative) (sealed #t) (opaque #t)
         (fields identifier   ; The pattern variable's name.
