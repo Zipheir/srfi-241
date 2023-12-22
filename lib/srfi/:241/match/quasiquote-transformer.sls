@@ -53,31 +53,31 @@
                   [tmpl2
                    (let-values ([(out2 vars2)
                                  (gen-output k #'tmpl2 0 ell?)])
-                     (for-each
-                      (lambda (tmpl vars)
-                        (when (null? vars)
-                          (quasiquote-syntax-violation #'tmpl "no substitutions to repeat here")))
-                      tmpl* vars*)
+		     (for-each
+		      (lambda (tmpl vars)
+			(when (null? vars)
+			  (quasiquote-syntax-violation #'tmpl "no substitutions to repeat here")))
+		      tmpl* vars*)
                      (with-syntax ([((tmp** ...) ...)
                                     (map (lambda (vars)
-                                           (map template-variable-identifier vars))
-                                         vars*)]
-                                   [(out1 ...) out*])
+					   (map template-variable-identifier vars))
+					 vars*)]
+				   [(out1 ...) out*])
                        (values #`(append (append-n-map #,depth
-                                                       (lambda (tmp** ...)
-                                                         out1)
-                                                       tmp** ...)
-                                         ...
+						       (lambda (tmp** ...)
+							 out1)
+						       tmp** ...)
+					 ...
                                          #,out2)
                                (append (apply append vars*) vars2))))]))))
-          (define gen-unquote*
-            (lambda (expr*)
+	  (define gen-unquote*
+	    (lambda (expr*)
               (with-syntax ([(tmp* ...) (generate-temporaries expr*)])
-                (values #'(tmp* ...)
-                        (map (lambda (tmp expr)
-                               (list (make-template-variable tmp expr)))
-                             #'(tmp* ...) expr*)))))
-          (syntax-case tmpl (unquote unquote-splicing) ;qq is K.
+		(values #'(tmp* ...)
+			(map (lambda (tmp expr)
+			       (list (make-template-variable tmp expr)))
+			     #'(tmp* ...) expr*)))))
+	  (syntax-case tmpl (unquote unquote-splicing) ;qq is K.
             ;; (<ellipsis> <template>)
             [(ell tmpl)
              (ell? #'ell)
@@ -103,17 +103,17 @@
                    (values #'',tmpl '())
                    (values #`(list 'unquote #,out) vars)))]
             ;; ((unquote-splicing <template> ...) <ellipsis> . <template>)
-            [((unquote-splicing expr ...) ell . tmpl2)
-             (and (zero? lvl) (ell? #'ell))
+	    [((unquote-splicing expr ...) ell . tmpl2)
+	     (and (zero? lvl) (ell? #'ell))
              (let-values ([(out* vars*)
-                           (gen-unquote* #'(expr ...))])
-               (gen-ellipsis #'(expr ...) out* vars* 1 #'tmpl2))]
+			   (gen-unquote* #'(expr ...))])
+	       (gen-ellipsis #'(expr ...) out* vars* 1 #'tmpl2))]
             ;; (<template> <ellipsis> . <template>)
-            [((unquote expr ...) ell . tmpl2)
-             (and (zero? lvl) (ell? #'ell))
+	    [((unquote expr ...) ell . tmpl2)
+	     (and (zero? lvl) (ell? #'ell))
              (let-values ([(out* vars*)
-                           (gen-unquote* #'(expr ...))])
-               (gen-ellipsis #'(expr ...) out* vars* 0 #'tmpl2))]
+			   (gen-unquote* #'(expr ...))])
+	       (gen-ellipsis #'(expr ...) out* vars* 0 #'tmpl2))]
             [(tmpl1 ell . tmpl2)
              (and (zero? lvl) (ell? #'ell))
              (let-values ([(out1 vars1)

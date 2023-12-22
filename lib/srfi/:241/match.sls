@@ -26,8 +26,8 @@
   (export match
           unquote ... _ -> guard)
   (import (rnrs (6))
-          (srfi :241 match helpers)
-          (srfi :241 match quasiquote-transformer))
+	  (srfi :241 match helpers)
+	  (srfi :241 match quasiquote-transformer))
 
   (define-syntax ->
     (lambda (stx)
@@ -56,44 +56,44 @@
         (fields proc-expr value-id* identifier))
 
       (define make-identifier-hashtable
-        (lambda ()
-          (define identifier-hash
-            (lambda (id)
-              (assert (identifier? id))
-              (symbol-hash (syntax->datum id))))
-          (make-hashtable identifier-hash bound-identifier=?)))
+	(lambda ()
+	  (define identifier-hash
+	    (lambda (id)
+	      (assert (identifier? id))
+	      (symbol-hash (syntax->datum id))))
+	  (make-hashtable identifier-hash bound-identifier=?)))
 
       (define check-pattern-variables
-        (lambda (pvars)
-          (define ht (make-identifier-hashtable))
-          (for-each
-           (lambda (pvar)
-             (define id (pattern-variable-identifier pvar))
-             (hashtable-update! ht
-                                id
-                                (lambda (val)
-                                  (when val
-                                    (syntax-violation who "repeated pattern variable in match clause" stx id))
-                                  #t)
-                                #f))
-           pvars)))
+	(lambda (pvars)
+	  (define ht (make-identifier-hashtable))
+	  (for-each
+	   (lambda (pvar)
+	     (define id (pattern-variable-identifier pvar))
+	     (hashtable-update! ht
+				id
+				(lambda (val)
+				  (when val
+				    (syntax-violation who "repeated pattern variable in match clause" stx id))
+				  #t)
+				#f))
+	   pvars)))
 
       (define check-cata-bindings
-        (lambda (catas)
-          (define ht (make-identifier-hashtable))
-          (for-each
-           (lambda (cata)
-             (for-each
-              (lambda (id)
-                (hashtable-update! ht
-                                   id
-                                   (lambda (val)
-                                     (when val
-                                       (syntax-violation who "repeated cata variable in match clause" stx id))
-                                     #t)
-                                   #f))
-              (cata-binding-value-id* cata)))
-           catas)))
+	(lambda (catas)
+	  (define ht (make-identifier-hashtable))
+	  (for-each
+	   (lambda (cata)
+	     (for-each
+	      (lambda (id)
+		(hashtable-update! ht
+				   id
+				   (lambda (val)
+				     (when val
+				       (syntax-violation who "repeated cata variable in match clause" stx id))
+				     #t)
+				   #f))
+	      (cata-binding-value-id* cata)))
+	   catas)))
 
       (define parse-clause
         (lambda (cl)
@@ -263,8 +263,8 @@
                          (parse-clause cl)]
                         [(matcher pvars catas)
                          (gen-matcher #'e pat)])
-            (check-pattern-variables pvars)
-            (check-cata-bindings catas)
+	    (check-pattern-variables pvars)
+	    (check-cata-bindings catas)
             (with-syntax ([quasiquote
                            (datum->syntax k 'quasiquote)]
                           [(x ...)
