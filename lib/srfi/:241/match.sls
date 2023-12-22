@@ -128,10 +128,10 @@
       ;; *pat*.
       (define (gen-matcher expr pat)
         (syntax-case pat (-> unquote)
-          [,[f -> y ...]     ; Cata pattern with named operator.
+          [,[f -> y ...]     ; Cata pattern with operator.
            (for-all identifier? #'(y ...))
            (gen-cata-matcher expr #'f #'(y ...))]
-          [,[y ...]          ; (Anonymous) cata pattern.
+          [,[y ...]          ; Cata pattern.
            (for-all identifier? #'(y ...))
            (gen-cata-matcher expr #'loop #'(y ...))]
           [(pat1 ell pat2 ... . pat3)  ; Ellipsis pattern.
