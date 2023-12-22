@@ -198,8 +198,7 @@
       (define (gen-matcher* expr pat*)
         (syntax-case pat* (unquote)
           [() (values (null-matcher expr) '() '())]
-          [,x
-           (gen-matcher expr pat*)]
+          [,x (gen-matcher expr pat*)]
           [(pat . pat*)
            (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
              (let*-values ([(mat1 pvars1 catas1)
