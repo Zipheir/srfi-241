@@ -67,46 +67,35 @@
         (nongenerative) (sealed #t) (opaque #t)
         (fields proc-expr value-id* identifier))
 
-      ;; Check *pvars* for repeated pattern variables.
       (define check-pattern-variables
         (lambda (pvars)
           (define ht (make-identifier-hashtable))
-
-          (define repeated-pvar-error
-            (lambda (id)
-              (syntax-violation
-               who
-               "repeated pattern variable in match clause" stx id)))
-
           (for-each
            (lambda (pvar)
-             (let* ((id (pattern-variable-identifier pvar))
-                    (update (lambda (val)
-                              (when val (repeated-pvar-error id))
-                              #t)))
-               (hashtable-update! ht id update #f)))
+             (define id (pattern-variable-identifier pvar))
+             (hashtable-update! ht
+                                id
+                                (lambda (val)
+                                  (when val
+                                    (syntax-violation who "repeated pattern variable in match clause" stx id))
+                                  #t)
+                                #f))
            pvars)))
 
-      ;; Check *catas* for repeated cata variables.
       (define check-cata-bindings
         (lambda (catas)
           (define ht (make-identifier-hashtable))
-
-          (define repeated-cata-var-error
-            (lambda (id)
-              (syntax-violation who
-                                "repeated cata variable in match clause"
-                                stx
-                                id)))
-
           (for-each
            (lambda (cata)
              (for-each
               (lambda (id)
-                (let ((update (lambda (val)
-                                (when val (repeated-cata-var-error id))
-                                #t)))
-                  (hashtable-update! ht id update #f)))
+                (hashtable-update! ht
+                                   id
+                                   (lambda (val)
+                                     (when val
+                                       (syntax-violation who "repeated cata variable in match clause" stx id))
+                                     #t)
+                                   #f))
               (cata-binding-value-id* cata)))
            catas)))
 
