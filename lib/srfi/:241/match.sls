@@ -47,6 +47,8 @@
     (lambda (stx)
       (define who 'match)
 
+      (define (invoke success) (success))
+
       (define-record-type pattern-variable
         (nongenerative) (sealed #t) (opaque #t)
         (fields identifier expression level))
@@ -128,8 +130,7 @@
           [,x
            (identifier? #'x)
            (values
-            (lambda (k)
-              (k))
+            invoke
             (list (make-pattern-variable #'x expr 0))
             '())]
           [(pat1 . pat2)
