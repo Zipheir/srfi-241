@@ -259,14 +259,14 @@
                            (map pattern-variable-expression ipvars)])
               (values
                (lambda (succeed)
-                 #`(let loop ([e2 (reverse #,expr)]
-                              [u '()] ...)
+                 #`(let f ([e2 (reverse #,expr)]
+                           [u '()] ...)
                      (if (null? e2)
                          #,(succeed)
                          (let ([e1 (car e2)])
                            #,(matcher
                               (lambda ()
-                                #`(loop (cdr e2) (cons v u) ...)))))))
+                                #`(f (cdr e2) (cons v u) ...)))))))
                (map
                 (lambda (id pvar)
                   (make-pattern-variable
