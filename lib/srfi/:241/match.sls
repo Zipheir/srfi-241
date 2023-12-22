@@ -251,26 +251,24 @@
 
       ;; Build a matcher for the ellipsized pattern *pat*.
       (define (gen-glob-matcher expr pat)
-        (with-syntax ([(head lis loop)
-                       (generate-temporaries '(head lis loop))])
+        (with-syntax ([(e1 e2 f) (generate-temporaries '(e1 e2 f))])
           (let-values ([(matcher ipvars catas)
-                        (gen-matcher #'head pat)])
+                        (gen-matcher #'e1 pat)])
             (with-syntax ([(u ...)
                            (generate-temporaries ipvars)]
                           [(v ...)
                            (map pattern-variable-expression ipvars)])
               (values
-               ;; Matches each element of the list expr, accumulating
-               ;; bindings of u's to v's.
+               ;; Matches each element of the list expr against pat.
                (lambda (succeed)
-                 #`(let loop ([lis (reverse #,expr)]
+                 #`(let loop ([e2 (reverse #,expr)]
                               [u '()] ...)
-                     (if (null? lis)
+                     (if (null? e2)
                          #,(succeed)
-                         (let ([head (car lis)])
+                         (let ([e1 (car e2)])
                            #,(matcher
                               (lambda ()
-                                #`(loop (cdr lis) (cons v u) ...)))))))
+                                #`(loop (cdr e2) (cons v u) ...)))))))
                ;; Make "meta" pattern variables for the ellipsized
                ;; variables. These will be bound to lists of values
                ;; matched individually.
