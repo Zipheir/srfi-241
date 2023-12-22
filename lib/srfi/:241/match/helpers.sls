@@ -26,36 +26,40 @@
   (export ellipsis? cons-length split-at)
   (import (rnrs))
 
-  (define (ellipsis? x)
-    (and (identifier? x)
-	 (free-identifier=? x #'(... ...))))
+  (define ellipsis?
+    (lambda (x)
+      (and (identifier? x)
+           (free-identifier=? x #'(... ...)))))
 
     ;; Returns the length of the list prefix of x, which may be a
     ;; proper or improper list. If it is improper, the final element
     ;; is not included in the length calculation. If x is circular,
     ;; an exception is raised.
-    (define (cons-length x)
-      (let loop ([x x] [y x] [n 0])
-	(if (pair? x)
-	    (let ([x (cdr x)]
-		  [n (+ n 1)])
-	      (if (pair? x)
-		  (let ([x (cdr x)]
-			[y (cdr y)]
-			[n (+ n 1)])
-		    (if (eq? x y)
-			(assertion-violation 'cons-length
-					     "circular list")
-                        (loop x y n)))
-                  n))
-            n)))
+    (define cons-length
+      (lambda (x)
+        (let loop ([x x] [y x] [n 0])
+          (if (pair? x)
+              (let ([x (cdr x)]
+                    [n (+ n 1)])
+                (if (pair? x)
+                    (let ([x (cdr x)]
+                          [y (cdr y)]
+                          [n (+ n 1)])
+                      (if (eq? x y)
+                          (assertion-violation 'cons-length
+                                               "circular list")
+
+                          (loop x y n)))
+                    n))
+              n))))
 
   ;; Splits the list ls at index k, returning a list of the first k
   ;; elements, and the remaining tail.
-  (define (split-at ls k)
-    (let f ([ls ls] [k k])
-      (if (zero? k)
-	  (values '() ls)
-	  (let-values ([(ls1 ls2)
-			(f (cdr ls) (- k 1))])
-	    (values (cons (car ls) ls1) ls2))))))
+  (define split-at
+    (lambda (ls k)
+      (let f ([ls ls] [k k])
+        (if (zero? k)
+            (values '() ls)
+            (let-values ([(ls1 ls2)
+                          (f (cdr ls) (- k 1))])
+              (values (cons (car ls) ls1) ls2)))))))
