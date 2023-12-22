@@ -144,9 +144,9 @@
           [,x
            (identifier? #'x)
            (gen-variable-matcher expr #'x)]
-          [(pat1 . pat2) (gen-pair-matcher #'expr #'pat1 #'pat2))
+          [(pat1 . pat2) (gen-pair-matcher #'expr #'pat1 #'pat2)]
           [unquote (ill-formed-match-pattern-violation)]
-          [_ (gen-constant-matcher #'expr #'pat)])
+          [_ (gen-constant-matcher #'expr #'pat)]))
 
       ;; Build a catamorphism matcher which recursively applies
       ;; *op* and binds the results to the *ids*.
