@@ -154,7 +154,7 @@
           (values
            invoke
            (list (make-pattern-variable #'x expr 0))
-           (list (make-cata-binding #'op #'ids #'x)))))
+           (list (make-cata-binding #'op #'(y ...) #'x)))))
 
       ;; Build a simple matcher which binds the pattern variable
       ;; with name *id* to the value of *expr*.
