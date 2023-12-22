@@ -154,13 +154,13 @@
           (values
            invoke
            (list (make-pattern-variable #'x expr 0))
-           (list (make-cata-binding #'op #'ids #'x)))))
+           (list (make-cata-binding op ids #'x)))))
 
       ;; Build a simple matcher which binds the pattern variable
       ;; with name *id* to the value of *expr*.
       (define (gen-variable-matcher expr id)
         (values invoke
-                (list (make-pattern-variable #'id expr 0))
+                (list (make-pattern-variable id expr 0))
                 '()))
 
       ;; Build a matcher which matches *expr* against the literal
@@ -181,9 +181,9 @@
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           ;; Build head & tail matchers.
           (let*-values ([(car-match car-pvars car-catas)
-                         (gen-matcher #'e1 #'car-pat)]
+                         (gen-matcher #'e1 car-pat)]
                         [(cdr-match cdr-pvars cdr-catas)
-                         (gen-matcher #'e2 #'cdr-pat)])
+                         (gen-matcher #'e2 cdr-pat)])
             (values
              (lambda (succeed)     ; Combine matchers.
                #`(if (pair? #,expr)
