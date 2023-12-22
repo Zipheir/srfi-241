@@ -221,8 +221,9 @@
       ;; of patterns.
       (define (gen-list-matcher expr pats)
         (syntax-case pats (unquote)
-          [() (values (null-matcher expr) '() '())]
-          [,x (gen-matcher expr pats)]
+          [() (values null-matcher '() '())]
+          [,x  ; Tail of an improper list.
+           (gen-variable-matcher expr pats)]
           [(pat . pats)
            (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
              (let*-values ([(mat1 pvars1 catas1)
@@ -242,11 +243,10 @@
            (gen-matcher expr pats)]))
 
       ;; Matcher for the empty list.
-      (define (null-matcher expr)
-        (lambda (succeed)
-          #`(if (null? #,expr)
-                #,(succeed)
-                (fail))))
+      (define (null-matcher succeed)
+        #`(if (null? #,expr)
+              #,(succeed)
+              (fail)))
 
       ;; Build a matcher for the ellipsized pattern *pat*.
       (define (gen-glob-matcher expr pat)
