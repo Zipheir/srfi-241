@@ -34,11 +34,11 @@
     (let f ([x x] [y x] [n 0])
       (if (pair? x)
           (let ([x (cdr x)]
-                [n (fx+ n 1)])
+                [n (+ n 1)])
             (if (pair? x)
                 (let ([x (cdr x)]
                       [y (cdr y)]
-                      [n (fx+ n 1)])
+                      [n (+ n 1)])
                   (and (not (eq? x y))
                        (f x y n)))
                 n))
@@ -46,8 +46,8 @@
 
   (define (split-at ls k)
     (let f ([ls ls] [k k])
-      (if (fxzero? k)
+      (if (zero? k)
           (values '() ls)
           (let-values ([(ls1 ls2)
-                        (f (cdr ls) (fx- k 1))])
+                        (f (cdr ls) (- k 1))])
             (values (cons (car ls) ls1) ls2))))))

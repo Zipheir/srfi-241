@@ -36,10 +36,10 @@
   (define (split/continuations obj k succ fail)
     (let ([n (length+ obj)])
       (if (and n
-               (fx<=? k n))
+               (<= k n))
           (call-with-values
               (lambda ()
-                (split-at obj (fx- n k)))
+                (split-at obj (- n k)))
             succ)
           (fail))))
 
@@ -240,13 +240,13 @@
                   (make-pattern-variable
                    (pattern-variable-identifier pvar)
                    id
-                   (fx+ (pattern-variable-level pvar) 1)))
+                   (+ (pattern-variable-level pvar) 1)))
                 #'(u ...) ipvars)
                catas)))))
 
       (define (gen-map-values proc-expr y* e n)
         (let f ([n n])
-          (if (fxzero? n)
+          (if (zero? n)
               #`(#,proc-expr #,e)
               (with-syntax ([(tmps ...)
                              (generate-temporaries y*)]
@@ -260,7 +260,7 @@
                         (let ([e (car e*)]
                               [e* (cdr e*)])
                           (let-values ([(tmp ...)
-                                        #,(f (fx- n 1))])
+                                        #,(f (- n 1))])
                             (f e* (cons tmp tmps) ...)))))))))
 
       (define (gen-clause k cl)
