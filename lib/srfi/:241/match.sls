@@ -35,8 +35,9 @@
 
   (define split
     (lambda (obj k succ fail)
-      (let ([n (cons-length obj)])
-        (if (<= k n)
+      (let ([n (length+ obj)])
+        (if (and n
+                 (<= k n))
             (call-with-values
                 (lambda ()
                   (split-at obj (- n k)))
