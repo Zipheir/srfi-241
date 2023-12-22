@@ -347,7 +347,7 @@
                   pvars))
 
         (map (lambda (tmp ys z)
-               (let ([n (binding-id-level z pvars)])
+               (let ([n (binding-id-level z)])
                  (gen-cata-values tmp ys z n)))
              tmps
              val-ids
