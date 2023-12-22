@@ -31,8 +31,7 @@
       (and (identifier? x)
            (free-identifier=? x #'(... ...)))))
 
-    (define length+
-    (lambda (x)
+    (define (length+ x)
       (let f ([x x] [y x] [n 0])
         (if (pair? x)
             (let ([x (cdr x)]
@@ -44,7 +43,7 @@
                     (and (not (eq? x y))
                          (f x y n)))
                   n))
-            n))))
+            n)))
 
   (define split-at
     (lambda (ls k)
