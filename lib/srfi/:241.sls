@@ -25,7 +25,3 @@
 (library (srfi :241)
   (export match unquote ... _ guard)
   (import (srfi :241 match)))
-
-;; Local Variables:
-;; mode: scheme
-;; End:
