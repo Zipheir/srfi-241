@@ -133,7 +133,7 @@
            (gen-cata-matcher expr #'f #'(y ...))]
           [,[y ...]          ; (Anonymous) cata pattern.
            (for-all identifier? #'(y ...))
-           (gen-cata-matcher expr #'loop #'(y ...))]
+           (gen-cata-matcher expr #'match-loop #'(y ...))]
           [(pat1 ell pat2 ... . pat3)  ; Ellipsis pattern.
            (ellipsis? #'ell)
            (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
@@ -367,7 +367,7 @@
 
       (syntax-case stx ()
         [(key expr clause ...)
-         #`(let loop ([expr-val expr])
+         #`(let match-loop ([expr-val expr])
              #,(gen-match #'key #'(clause ...)))])))
 
   )
