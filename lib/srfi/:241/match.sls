@@ -33,7 +33,7 @@
     (lambda (stx)
       (syntax-violation '-> "invalid use of auxiliary syntax" stx)))
 
-  (define (split obj k succ fail)
+  (define (split/continuations obj k succ fail)
     (let ([n (length+ obj)])
       (if (and n
                (fx<=? k n))
@@ -172,7 +172,7 @@
                          (gen-matcher* #'e2 (append pat2* pat3))])
             (values
              (lambda (k)
-               #`(split
+               #`(split/continuations
                   #,expr
                   #,(length pat2*)
                   (lambda (e1 e2)
