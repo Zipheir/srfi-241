@@ -26,10 +26,9 @@
   (export ellipsis? length+ split-at)
   (import (rnrs))
 
-  (define ellipsis?
-    (lambda (x)
-      (and (identifier? x)
-           (free-identifier=? x #'(... ...)))))
+  (define (ellipsis? x)
+    (and (identifier? x)
+         (free-identifier=? x #'(... ...))))
 
     (define (length+ x)
       (let f ([x x] [y x] [n 0])
@@ -45,14 +44,13 @@
                   n))
             n)))
 
-  (define split-at
-    (lambda (ls k)
-      (let f ([ls ls] [k k])
-        (if (fxzero? k)
-            (values '() ls)
-            (let-values ([(ls1 ls2)
-                          (f (cdr ls) (fx- k 1))])
-              (values (cons (car ls) ls1) ls2)))))))
+  (define (split-at ls k)
+    (let f ([ls ls] [k k])
+      (if (fxzero? k)
+          (values '() ls)
+          (let-values ([(ls1 ls2)
+                        (f (cdr ls) (fx- k 1))])
+            (values (cons (car ls) ls1) ls2))))))
 
 ;; Local Variables:
 ;; mode: scheme
