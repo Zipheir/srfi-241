@@ -59,6 +59,7 @@
         (define (identifier-hash id)
           (assert (identifier? id))
           (symbol-hash (syntax->datum id)))
+
         (make-hashtable identifier-hash bound-identifier=?))
 
       (define (check-pattern-variables pvars)
@@ -103,6 +104,7 @@
       (define (gen-matcher expr pat)
         (define (ill-formed-match-pattern-violation)
           (syntax-violation who "ill-formed match pattern" stx pat))
+
         (syntax-case pat (-> unquote)
           [,[f -> y ...]
            (for-all identifier? #'(y ...))
