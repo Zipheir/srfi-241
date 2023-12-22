@@ -131,7 +131,7 @@
               (lambda (k)
                 (k))
               (list (make-pattern-variable #'x expr 0))
-              (list (make-cata-binding #'loop #'(y ...) #'x))))]
+              (list (make-cata-binding #'match-loop #'(y ...) #'x))))]
           [(pat1 ell pat2 ... . pat3)
            (ellipsis? #'ell)
            (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
@@ -261,7 +261,7 @@
         (let*-values ([(pat guard-expr body)
                        (parse-clause cl)]
                       [(matcher pvars catas)
-                       (gen-matcher #'e pat)])
+                       (gen-matcher #'expr-val pat)])
           (check-pattern-variables pvars)
           (check-cata-bindings catas)
           (with-syntax ([quasiquote
@@ -308,9 +308,11 @@
          #'(assertion-violation 'who "value does not match" e)
          cl*))
 
+      ;; Binds the 'match-loop' & 'expr-val' identifiers which are
+      ;; referenced by generated matchers.
       (syntax-case stx ()
         [(k expr cl ...)
-         #`(let loop ([e expr])
+         #`(let match-loop ([expr-val expr])
              #,(gen-match #'k #'(cl ...)))])))
 
   )
