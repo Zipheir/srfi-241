@@ -64,13 +64,13 @@
         (nongenerative) (sealed #t) (opaque #t)
         (fields identifier   ; The pattern variable's name.
                 expression   ; The expression it's bound to.
-                level))      ; Recursion level of binding.
+                level))      ; ?
 
       (define-record-type cata-binding
         (nongenerative) (sealed #t) (opaque #t)
         (fields proc-expr    ; The catamorphism operator.
                 value-ids    ; The identifiers bound to the results.
-                identifier)) ; Name of associated, hidden pattern var.
+                identifier)) ; The cata variable's name (hidden).
 
       (define repeated-pvar-error
         (lambda (id)
