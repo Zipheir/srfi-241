@@ -189,15 +189,15 @@
              (append pvars1 pvars2)
              (append catas1 catas2)))))
 
+      (define (null-matcher expr)
+        (lambda (succeed)
+          #`(if (null? #,expr)
+                #,(succeed)
+                (fail))))
+
       (define (gen-matcher* expr pat*)
         (syntax-case pat* (unquote)
-          [()
-           (values
-            (lambda (succeed)
-              #`(if (null? #,expr)
-                    #,(succeed)
-                    (fail)))
-            '() '())]
+          [() (values (null-matcher expr) '() '())]
           [,x
            (gen-matcher expr pat*)]
           [(pat . pat*)
