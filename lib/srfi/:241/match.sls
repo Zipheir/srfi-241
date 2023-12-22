@@ -83,7 +83,7 @@
 	   (lambda (pvar)
 	     (let* ((id (pattern-variable-identifier pvar))
 		    (update (lambda (val)
-			      (when val (repeated-pvar-error stx id))
+			      (when val (repeated-pvar-error id))
 			      #t)))
 	       (hashtable-update! ht id update #f)))
 	   pvars)))
@@ -96,7 +96,7 @@
 	     (for-each
 	      (lambda (id)
 		(let ((update (lambda (val)
-				(when val (repeated-cata-var-error stx id))
+				(when val (repeated-cata-var-error id))
 				#t)))
 		  (hashtable-update! ht id update #f)))
 	      (cata-binding-value-ids cata)))
