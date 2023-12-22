@@ -29,7 +29,7 @@
   (define ellipsis?
     (lambda (x)
       (and (identifier? x)
-	   (free-identifier=? x #'(... ...)))))
+           (free-identifier=? x #'(... ...)))))
 
     (define length+
     (lambda (x)
