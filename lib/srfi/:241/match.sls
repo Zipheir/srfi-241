@@ -144,7 +144,7 @@
            (identifier? #'x)
            (gen-variable-matcher expr #'x)]
           [(pat1 . pat2) (gen-pair-matcher #'expr #'pat1 #'pat2)]
-          [unquote (ill-formed-match-pattern-violation)]
+          [unquote (ill-formed-match-pattern-violation pat)]
           [_ (gen-constant-matcher #'expr #'pat)]))
 
       ;; Build a catamorphism matcher which recursively applies
