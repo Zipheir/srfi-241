@@ -129,33 +129,11 @@
            (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
           [,x
            (identifier? #'x)
-           (values
-            invoke
-            (list (make-pattern-variable #'x expr 0))
-            '())]
-          [(pat1 . pat2)
-           (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
-             (let*-values ([(mat1 pvars1 catas1)
-                            (gen-matcher #'e1 #'pat1)]
-                           [(mat2 pvars2 catas2)
-                            (gen-matcher #'e2 #'pat2)])
-               (values
-                (lambda (k)
-                  #`(if (pair? #,expr)
-                        (let ([e1 (car #,expr)]
-                              [e2 (cdr #,expr)])
-                          #,(mat1 (lambda () (mat2 k))))
-                        (fail)))
-                (append pvars1 pvars2) (append catas1 catas2))))]
+           (gen-variable-matcher expr #'x)]
+          [(pat1 . pat2) (gen-pair-matcher expr #'pat1 #'pat2)]
           [unquote
            (ill-formed-match-pattern-violation)]
-          [_
-           (values
-            (lambda (k)
-              #`(if (equal? #,expr '#,pat)
-                    #,(k)
-                    (fail)))
-            '() '())]))
+          [_ (gen-constant-matcher expr pat)]))
 
       (define (gen-cata-matcher cata-op expr ids)
         (with-syntax ([(x) (generate-temporaries '(x))])
@@ -163,6 +141,36 @@
            invoke
            (list (make-pattern-variable #'x expr 0))
            (list (make-cata-binding cata-op ids #'x)))))
+
+      (define (gen-variable-matcher expr id)
+        (values
+         invoke
+         (list (make-pattern-variable id expr 0))
+         '()))
+
+      (define (gen-constant-matcher expr obj)
+        (values
+         (lambda (succeed)
+           #`(if (equal? #,expr '#,obj)
+                 #,(succeed)
+                 (fail)))
+         '()
+         '()))
+
+      (define (gen-pair-matcher expr car-pat cdr-pat)
+        (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
+          (let*-values ([(mat1 pvars1 catas1)
+                         (gen-matcher #'e1 car-pat)]
+                        [(mat2 pvars2 catas2)
+                         (gen-matcher #'e2 cdr-pat)])
+            (values
+             (lambda (k)
+               #`(if (pair? #,expr)
+                     (let ([e1 (car #,expr)]
+                           [e2 (cdr #,expr)])
+                       #,(mat1 (lambda () (mat2 k))))
+                     (fail)))
+             (append pvars1 pvars2) (append catas1 catas2)))))
 
       (define (gen-ellipsis-matcher expr pat1 pat2* pat3)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
