@@ -325,7 +325,8 @@
                         [(tmp ...)
                          (generate-temporaries catas)])
             (with-syntax ([(e ...)
-                           (extract-cata-values #'(tmp ...)
+                           (extract-cata-values pvars
+                                                #'(tmp ...)
                                                 #'((y ...) ...)
                                                 #'(z ...))])
               (matcher
