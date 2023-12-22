@@ -222,8 +222,7 @@
       (define (gen-list-matcher expr pats)
         (syntax-case pats (unquote)
           [() (values (null-matcher expr) '() '())]
-          [,x  ; Tail of an improper list.
-           (gen-variable-matcher expr pats)]
+          [,x (gen-matcher expr pats)]
           [(pat . pats)
            (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
              (let*-values ([(mat1 pvars1 catas1)
