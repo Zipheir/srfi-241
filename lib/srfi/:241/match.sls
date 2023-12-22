@@ -269,15 +269,12 @@
                            #,(matcher
                               (lambda ()
                                 #`(loop (cdr e2) (cons v u) ...)))))))
-               ;; Make "meta" pattern variables for the ellipsized
-               ;; variables. These will be bound to lists of values
-               ;; matched individually.
                (map
                 (lambda (id pvar)
                   (make-pattern-variable
                    (pattern-variable-identifier pvar)
                    id
-                   (+ (pattern-variable-level pvar) 1)))
+                   (+ (pattern-variable-level pvar) 1)))  ; why increment?
                 #'(u ...)
                 ipvars)
                catas)))))
