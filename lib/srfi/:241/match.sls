@@ -283,15 +283,15 @@
 			 (generate-temporaries catas)])
 	    (with-syntax ([(e ...)
 			   (map
-			    (lambda (tmp ys z)
+			    (lambda (tmp y* z)
 			      (let ([n
 				     (exists
 				      (lambda (pvar)
-					(let ([id (pattern-variable-identifier pvar)])
-					  (and (bound-identifier=? id z)
+					(let ([x (pattern-variable-identifier pvar)])
+					  (and (bound-identifier=? x z)
 					       (pattern-variable-level pvar))))
 				      pvars)])
-				(gen-map-values tmp ys z n)))
+				(gen-map-values tmp y* z n)))
 			    #'(tmp ...) #'((y ...) ...) #'(z ...))])
 	      (matcher
 	       (lambda ()
