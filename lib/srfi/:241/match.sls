@@ -49,11 +49,11 @@
 
   (define make-identifier-hashtable
     (lambda ()
-      (let ((identifier-hash
-             (lambda (id)
-               (assert (identifier? id))
-               (symbol-hash (syntax->datum id)))))
-        (make-hashtable identifier-hash bound-identifier=?))))
+      (define identifier-hash
+        (lambda (id)
+          (assert (identifier? id))
+          (symbol-hash (syntax->datum id))))
+      (make-hashtable identifier-hash bound-identifier=?)))
 
   ;;;; match
 
@@ -76,15 +76,15 @@
       ;; Check *pvars* for repeated pattern variables.
       (define check-pattern-variables
         (lambda (pvars)
-          (let ((ht (make-identifier-hashtable)))
-	    (for-each
-	     (lambda (pvar)
-	       (let* ((id (pattern-variable-identifier pvar))
-		      (update (lambda (val)
-				(when val (repeated-pvar-error id))
-				#t)))
-		 (hashtable-update! ht id update #f)))
-	     pvars))))
+          (define ht (make-identifier-hashtable))
+          (for-each
+           (lambda (pvar)
+             (let* ((id (pattern-variable-identifier pvar))
+                    (update (lambda (val)
+                              (when val (repeated-pvar-error id))
+                              #t)))
+               (hashtable-update! ht id update #f)))
+           pvars)))
 
       (define repeated-cata-var-error
         (lambda (id)
@@ -96,17 +96,17 @@
       ;; Check *catas* for repeated cata variables.
       (define check-cata-bindings
         (lambda (catas)
-          (let ((ht (make-identifier-hashtable)))
-	    (for-each
-	     (lambda (cata)
-	       (for-each
-		(lambda (id)
-		  (let ((update (lambda (val)
-				  (when val (repeated-cata-var-error id))
-				  #t)))
-		    (hashtable-update! ht id update #f)))
-		(cata-binding-value-id* cata)))
-	     catas))))
+          (define ht (make-identifier-hashtable))
+          (for-each
+           (lambda (cata)
+             (for-each
+              (lambda (id)
+                (let ((update (lambda (val)
+                                (when val (repeated-cata-var-error id))
+                                #t)))
+                  (hashtable-update! ht id update #f)))
+              (cata-binding-value-id* cata)))
+           catas)))
 
       (define parse-clause
         (lambda (cl)
