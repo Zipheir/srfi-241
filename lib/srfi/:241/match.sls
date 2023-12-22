@@ -151,7 +151,22 @@
             invoke
             (list (make-pattern-variable #'x expr 0))
             '())]
-          [(pat1 . pat2) (gen-cons-matcher #'expr #'pat1 #'pat2))
+          [(pat1 . pat2)
+           ;; Temporary expression values for the head & tail matchers.
+           (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
+             ;; Build head & tail matchers.
+             (let*-values ([(mat1 pvars1 catas1)
+                            (gen-matcher #'e1 #'pat1)]
+                           [(mat2 pvars2 catas2)
+                            (gen-matcher #'e2 #'pat2)])
+               (values
+                (lambda (succeed)     ; Combine matchers.
+                  #`(if (pair? #,expr)
+                        (let ([e1 (car #,expr)]
+                              [e2 (cdr #,expr)])
+                          #,(mat1 (lambda () (mat2 succeed))))
+                        (fail)))
+                (append pvars1 pvars2) (append catas1 catas2))))]
           [unquote
            (ill-formed-match-pattern-violation)]
           [_         ; Constant pattern.
@@ -161,26 +176,6 @@
                     #,(succeed)
                     (fail)))
             '() '())]))
-
-      ;; Build a matcher which matches the head of *expr* against
-      ;; *car-pat* and its tail against *cdr-pat*.
-      (define (gen-cons-matcher expr car-pat cdr-pat)
-        ;; Temporary expression values for the head & tail matchers.
-        (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
-          ;; Build head & tail matchers.
-          (let*-values ([(car-match car-pvars car-catas)
-                         (gen-matcher #'e1 #'car-pat)]
-                        [(cdr-match cdr-pvars cdr-catas)
-                         (gen-matcher #'e2 #'cdr-pat)])
-            (values
-             (lambda (succeed)     ; Combine matchers.
-               #`(if (pair? #,expr)
-                     (let ([e1 (car #,expr)]
-                           [e2 (cdr #,expr)])
-                       #,(car-match (lambda () (cdr-match succeed))))
-                     (fail)))
-             (append car-pvars cdr-pvars)
-             (append car-catas cdr-catas)))))
 
       (define (gen-ellipsis-matcher expr pat1 pat2* pat3)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
