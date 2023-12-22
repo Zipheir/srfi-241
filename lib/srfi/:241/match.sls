@@ -152,15 +152,13 @@
             (list (make-pattern-variable #'x expr 0))
             '())]
           [(pat1 . pat2)
-           ;; Temporary expression values for the head & tail matchers.
            (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
-             ;; Build head & tail matchers.
              (let*-values ([(mat1 pvars1 catas1)
                             (gen-matcher #'e1 #'pat1)]
                            [(mat2 pvars2 catas2)
                             (gen-matcher #'e2 #'pat2)])
                (values
-                (lambda (k)     ; Combine matchers.
+                (lambda (k)
                   #`(if (pair? #,expr)
                         (let ([e1 (car #,expr)]
                               [e2 (cdr #,expr)])
@@ -169,7 +167,7 @@
                 (append pvars1 pvars2) (append catas1 catas2))))]
           [unquote
            (ill-formed-match-pattern-violation)]
-          [_         ; Constant pattern.
+          [_         ; Constant.
            (values
             (lambda (k)
               #`(if (equal? #,expr '#,pat)
@@ -311,9 +309,6 @@
                                #,@body)))
                          (fail)))))))))
 
-      ;; Parse each *clause* and combine the results into a single
-      ;; matcher. This binds the 'fail' continuations which are used
-      ;; by other gen- procedures.
       (define (gen-match key clauses)
         (fold-right
          (lambda (cl rest)
