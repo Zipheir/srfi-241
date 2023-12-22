@@ -95,10 +95,9 @@
 	   (lambda (cata)
 	     (for-each
 	      (lambda (id)
-		(let ((update
-		       (lambda (val)
-                         (when val (repeated-cata-var-error stx id))
-                         #t)))
+		(let ((update (lambda (val)
+				(when val (repeated-cata-var-error stx id))
+				#t)))
 		  (hashtable-update! ht id update #f)))
 	      (cata-binding-value-ids cata)))
 	   catas)))
