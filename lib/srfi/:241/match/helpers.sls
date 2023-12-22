@@ -63,3 +63,7 @@
             (let-values ([(ls1 ls2)
                           (f (cdr ls) (- k 1))])
               (values (cons (car ls) ls1) ls2)))))))
+
+;; Local Variables:
+;; mode: scheme
+;; End:
