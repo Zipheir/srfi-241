@@ -222,7 +222,14 @@
       ;; of patterns.
       (define (gen-list-matcher expr pats)
         (syntax-case pats (unquote)
-          [() (values null-matcher '() '())]
+          [()
+           (values
+            (lambda (succeed)
+              #`(if (null? #,expr)
+                    #,(succeed)
+                    (fail)))
+            '()
+            '())]
           [,x  ; Tail of an improper list.
            (gen-variable-matcher expr pats)]
           [(pat . pats)
@@ -242,12 +249,6 @@
                 (append catas1 catas2))))]
           [_  ; pass the buck
            (gen-matcher expr pats)]))
-
-      ;; Matcher for the empty list.
-      (define (null-matcher succeed)
-        #`(if (null? #,expr)
-              #,(succeed)
-              (fail)))
 
       (define (gen-map expr pat)
         (with-syntax ([(e1 e2 f) (generate-temporaries '(e1 e2 f))])
