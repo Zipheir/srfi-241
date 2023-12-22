@@ -57,11 +57,11 @@
         (nongenerative) (sealed #t) (opaque #t)
         (fields proc-expr value-id* identifier))
 
-      (define (make-identifier-hashtable)
-        (define (identifier-hash id)
-          (assert (identifier? id))
-          (symbol-hash (syntax->datum id)))
+      (define (identifier-hash id)
+        (assert (identifier? id))
+        (symbol-hash (syntax->datum id)))
 
+      (define (make-identifier-hashtable)
         (make-hashtable identifier-hash bound-identifier=?))
 
       (define (repeated-pvar-error id)
