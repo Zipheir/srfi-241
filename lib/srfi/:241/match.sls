@@ -34,21 +34,21 @@
     (lambda (stx)
       (syntax-violation '-> "invalid use of auxiliary syntax" stx)))
 
+  (define (split-cps obj k succ fail)
+    (let ([n (cons-length obj)])
+      (if (<= k n)
+          (call-with-values
+           (lambda ()
+             (split-at obj (- n k)))
+           succ)
+          (fail))))
+
   ;;;; match
 
   (define-syntax match
     (lambda (stx)
       ;;; Helper procedures & syntax
       (define who 'match)
-
-      (define (split-cps obj k succ fail)
-        (let ([n (cons-length obj)])
-          (if (<= k n)
-              (call-with-values
-               (lambda ()
-                 (split-at obj (- n k)))
-               succ)
-              (fail))))
 
       (define (make-identifier-hashtable)
         (let ((identifier-hash
