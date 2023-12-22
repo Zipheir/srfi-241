@@ -78,8 +78,7 @@
                                   (lambda (val)
                                     (when val
                                       (repeated-pvar-error id)))
-                                    #t)
-               #f))
+                                    #t)))
            pvars)))
 
       (define (repeated-cata-var-error id)
@@ -99,8 +98,7 @@
                                    (lambda (val)
                                      (when val
                                        (repeated-cata-var-error id)))
-                                     #t)
-                #f)
+                                     #t))
               (cata-binding-value-id* cata)))
            catas)))
 
