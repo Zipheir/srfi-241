@@ -32,21 +32,17 @@
   (define quasiquote-transformer
     (lambda (stx)
       (define who 'quasiquote)
-
       (define-record-type template-variable
         (nongenerative) (sealed #t) (opaque #t)
         (fields identifier expression))
-
       (define quasiquote-syntax-violation
         (lambda (subform msg)
           (syntax-violation 'quasiquote msg stx subform)))
-
       (define gen-output
         (lambda (k tmpl lvl ell?)
           (define quasiquote?
             (lambda (x)
               (and (identifier? x) (free-identifier=? x k))))
-
           (define gen-ellipsis
             (lambda (tmpl* out* vars* depth tmpl2)
               (let f ([depth depth] [tmpl2 tmpl2])
@@ -74,7 +70,6 @@
                                          ...
                                          #,out2)
                                (append (apply append vars*) vars2))))]))))
-
           (define gen-unquote*
             (lambda (expr*)
               (with-syntax ([(tmp* ...) (generate-temporaries expr*)])
@@ -82,7 +77,6 @@
                         (map (lambda (tmp expr)
                                (list (make-template-variable tmp expr)))
                              #'(tmp* ...) expr*)))))
-
           (syntax-case tmpl (unquote unquote-splicing) ;qq is K.
             ;; (<ellipsis> <template>)
             [(ell tmpl)
@@ -187,7 +181,6 @@
             ;; <constant>
             [constant
              (values #''constant '())])))
-
       (define gen-output*
         (lambda (k tmpl* lvl ell?)
           (let f ([tmpl* tmpl*] [out* '()] [vars* '()])
@@ -197,7 +190,6 @@
                       [tmpl* (cdr tmpl*)])
                   (let-values ([(out vars) (gen-output k tmpl lvl ell?)])
                     (f tmpl* (cons out out*) (append vars vars*))))))))
-
       (syntax-case stx ()
         [(k tmpl)
          (let-values ([(out vars)
