@@ -312,7 +312,7 @@
          (lambda (cl rest)
            #`(let ([fail (lambda () #,rest)])
                #,(gen-clause k cl)))
-         #'(assertion-violation 'who "value does not match" e)
+         #'(assertion-violation 'who "value does not match" expr-val)
          cl*))
 
       ;; Binds the 'match-loop' & 'expr-val' identifiers which are
