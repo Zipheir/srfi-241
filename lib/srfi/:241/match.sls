@@ -190,15 +190,18 @@
              (append pvars1 pvars2)
              (append catas1 catas2)))))
 
-      (define (null-matcher expr)
-        (lambda (succeed)
-          #`(if (null? #,expr)
-                #,(succeed)
-                (fail))))
+      ;; Match the empty list.
+      (define (gen-null-matcher expr)
+        (values (lambda (succeed)
+                  #`(if (null? #,expr)
+                        #,(succeed)
+                        (fail)))
+                '()
+                '()))
 
       (define (gen-matcher* expr pat*)
         (syntax-case pat* (unquote)
-          [() (values (null-matcher expr) '() '())]
+          [() (gen-null-matcher expr)]
           [,x (gen-matcher expr pat*)]
           [(pat . pat*)
            (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
