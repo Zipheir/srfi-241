@@ -135,6 +135,9 @@
           [,[y ...]                ; Anonymous cata-pattern
            (for-all identifier? #'(y ...))
            (gen-cata-matcher #'match-loop expr #'(y ...))]
+          [(pat1 ell pat2 ... . ,var)  ; Match this explicitly to
+           (ellipsis? #'ell)           ; matching 'unquote'.
+           (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #',var)]
           [(pat1 ell pat2 ... . pat3)
            (ellipsis? #'ell)
            (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
