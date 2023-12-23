@@ -44,11 +44,11 @@
         (and (identifier? x) (free-identifier=? x k)))
 
       (define (gen-ellipsis tmpl* out* vars* depth tmpl2)
-        (let f ([depth depth] [tmpl2 tmpl2])
+        (let loop ([depth depth] [tmpl2 tmpl2])
           (syntax-case tmpl2 ()
             [(ell . tmpl2)
              (ell? #'ell)
-             (f (+ depth 1) #'tmpl2)]
+             (loop (+ depth 1) #'tmpl2)]
             [tmpl2
              (let-values ([(out2 vars2)
                            (gen-output k #'tmpl2 0 ell?)])
@@ -185,13 +185,13 @@
              (values #''constant '())]))
 
       (define (gen-output* k tmpl* lvl ell?)
-        (let f ([tmpl* tmpl*] [out* '()] [vars* '()])
+        (let loop ([tmpl* tmpl*] [out* '()] [vars* '()])
           (if (null? tmpl*)
               (values (reverse out*) vars*)
               (let ([tmpl (car tmpl*)]
                     [tmpl* (cdr tmpl*)])
                 (let-values ([(out vars) (gen-output k tmpl lvl ell?)])
-                  (f tmpl* (cons out out*) (append vars vars*)))))))
+                  (loop tmpl* (cons out out*) (append vars vars*)))))))
 
       (syntax-case stx ()
         [(k tmpl)
@@ -205,14 +205,14 @@
          (syntax-violation who "invalid syntax" stx)]))
 
   (define (append-n-map n proc . arg*)
-    (let f ([n n] [arg* arg*])
+    (let loop ([n n] [arg* arg*])
       (if (zero? n)
           (apply map proc arg*)
           (let ([n (- n 1)])
             (apply append
                    (apply map
                           (lambda arg*
-                            (f n arg*))
+                            (loop n arg*))
                           arg*))))))
 
   )
