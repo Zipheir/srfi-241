@@ -35,8 +35,7 @@
 
   (define (split/continuations obj k succ fail)
     (let ([n (length+ obj)])
-      (if (and n
-               (<= k n))
+      (if (and n (<= k n))
           (call-with-values
               (lambda ()
                 (split-at obj (- n k)))
@@ -110,10 +109,8 @@
         (syntax-case cl (guard)
           [(pat (guard guard-expr ...) e1 e2 ...)
            (values #'pat #'(and guard-expr ...) #'(e1 e2 ...))]
-          [(pat e1 e2 ...)
-           (values #'pat #'#t #'(e1 e2 ...))]
-          [_
-           (syntax-violation who "ill-formed match clause" stx cl)]))
+          [(pat e1 e2 ...) (values #'pat #'#t #'(e1 e2 ...))]
+          [_ (syntax-violation who "ill-formed match clause" stx cl)]))
 
       (define (gen-matcher expr pat)
         (define (ill-formed-match-pattern-violation)
@@ -216,15 +213,12 @@
                            (mat2 succeed)))))
                 (append pvars1 pvars2)
                 (append catas1 catas2))))]
-          [_
-           (gen-matcher expr pat*)]))
+          [_ (gen-matcher expr pat*)]))
 
       (define (gen-map expr pat)
         (with-syntax ([(e1 e2 f) (generate-temporaries '(e1 e2 f))])
-          (let-values ([(mat ipvars catas)
-                        (gen-matcher #'e1 pat)])
-            (with-syntax ([(u ...)
-                           (generate-temporaries ipvars)]
+          (let-values ([(mat ipvars catas) (gen-matcher #'e1 pat)])
+            (with-syntax ([(u ...) (generate-temporaries ipvars)]
                           [(v ...)
                            (map pattern-variable-expression ipvars)])
               (values
@@ -252,10 +246,8 @@
         (let gen-loop ([n n])
           (if (zero? n)
               #`(#,proc-expr #,e)
-              (with-syntax ([(tmps ...)
-                             (generate-temporaries y*)]
-                            [(tmp ...)
-                             (generate-temporaries y*)]
+              (with-syntax ([(tmps ...) (generate-temporaries y*)]
+                            [(tmp ...) (generate-temporaries y*)]
                             [e e])
                 #`(let loop ([e* (reverse e)]
                              [tmps '()] ...)
@@ -268,26 +260,21 @@
                             (loop e* (cons tmp tmps) ...)))))))))
 
       (define (gen-clause k cl)
-        (let*-values ([(pat guard-expr body)
-                       (parse-clause cl)]
+        (let*-values ([(pat guard-expr body) (parse-clause cl)]
                       [(matcher pvars catas)
                        (gen-matcher #'expr-val pat)])
           (check-pattern-variables pvars)
           (check-cata-bindings catas)
-          (with-syntax ([quasiquote
-                         (datum->syntax k 'quasiquote)]
+          (with-syntax ([quasiquote (datum->syntax k 'quasiquote)]
                         [(x ...)
                          (map pattern-variable-identifier pvars)]
                         [(u ...)
                          (map pattern-variable-expression pvars)]
-                        [(f ...)
-                         (map cata-binding-proc-expr catas)]
+                        [(f ...) (map cata-binding-proc-expr catas)]
                         [((y ...) ...)
                          (map cata-binding-value-id* catas)]
-                        [(z ...)
-                         (map cata-binding-identifier catas)]
-                        [(tmp ...)
-                         (generate-temporaries catas)])
+                        [(z ...) (map cata-binding-identifier catas)]
+                        [(tmp ...) (generate-temporaries catas)])
             (with-syntax ([(e ...)
                            (map
                             (lambda (tmp y* z)
