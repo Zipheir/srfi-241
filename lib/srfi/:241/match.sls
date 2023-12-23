@@ -33,7 +33,10 @@
     (lambda (stx)
       (syntax-violation '-> "invalid use of auxiliary syntax" stx)))
 
-  (define (split/continuations obj k succ fail)
+  ;;; Split the (im)proper list obj into a head and tail, where the
+  ;;; tail is of cons-length k. Pass these values to succ, or call
+  ;;; fail with no arguments if k is out of range.
+  (define (split-right/continuations obj k succ fail)
     (let ([n (length+ obj)])
       (if (and n (<= k n))
           (call-with-values
@@ -195,7 +198,7 @@
                          (gen-matcher* #'e2 rest-pat*)])
             (values
              (lambda (succeed)
-               #`(split/continuations
+               #`(split-right/continuations
                   #,expr
                   #,(length body-pats)
                   (lambda (e1 e2)
