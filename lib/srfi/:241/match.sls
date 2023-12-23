@@ -24,7 +24,7 @@
 
 (library (srfi :241 match)
   (export match
-          unquote ... _ -> guard)
+          unquote ... -> guard)
   (import (rnrs (6))
           (srfi :241 match helpers)
           (srfi :241 match quasiquote-transformer))
@@ -126,6 +126,8 @@
           [(pat1 ell pat2 ... . pat3)
            (ellipsis? #'ell)
            (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
+          [,u (underscore? #'u)     ; underscore is wild
+           (values invoke '() '())] ; succeed with no bindings
           [,x
            (identifier? #'x)
            (gen-variable-matcher expr #'x)]

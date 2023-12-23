@@ -23,12 +23,16 @@
 ;; SOFTWARE.
 
 (library (srfi :241 match helpers)
-  (export ellipsis? length+ split-at)
+  (export ellipsis? underscore? length+ split-at)
   (import (rnrs))
 
   (define (ellipsis? x)
     (and (identifier? x)
          (free-identifier=? x #'(... ...))))
+
+  (define (underscore? x)
+    (and (identifier? x)
+         (free-identifier=? x #'_)))
 
   (define (length+ x)
     (let f ([x x] [y x] [n 0])
