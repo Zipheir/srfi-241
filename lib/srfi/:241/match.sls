@@ -50,11 +50,15 @@
 
       (define-record-type pattern-variable
         (nongenerative) (sealed #t) (opaque #t)
-        (fields identifier expression level))
+        (fields identifier  ; Name
+                expression  ; Bound expression
+                level))     ; Variable level
 
       (define-record-type cata-binding
         (nongenerative) (sealed #t) (opaque #t)
-        (fields proc-expr value-id* identifier))
+        (fields proc-expr    ; Catamorphism operator
+                value-id*    ; Identifiers binding cata values
+                identifier)) ; Name of meta pattern-variable
 
       (define (identifier-hash id)
         (assert (identifier? id))
@@ -69,6 +73,7 @@
                           stx
                           id))
 
+      ;;; Check a list of pattern-variables for duplicates.
       (define (check-pattern-variables pvars)
         (define ht (make-identifier-hashtable))
 
@@ -89,6 +94,8 @@
                           stx
                           id))
 
+      ;;; Check a list of cata-variables for duplicates. Only
+      ;;; cata value-ids are checked.
       (define (check-cata-bindings catas)
         (define ht (make-identifier-hashtable))
 
@@ -105,6 +112,8 @@
             (cata-binding-value-id* cata)))
          catas))
 
+      ;;; Parse a match clause and return the pattern, guard, and
+      ;;; body as multiple values.
       (define (parse-clause cl)
         (syntax-case cl (guard)
           [(pat (guard guard-expr ...) e1 e2 ...)
@@ -117,17 +126,17 @@
           (syntax-violation who "ill-formed match pattern" stx pat))
 
         (syntax-case pat (-> unquote)
-          [,[f -> y ...]
+          [,[f -> y ...]           ; Named cata-pattern
            (for-all identifier? #'(y ...))
            (gen-cata-matcher #'f expr #'(y ...))]
-          [,[y ...]
+          [,[y ...]                ; Anonymous cata-pattern
            (for-all identifier? #'(y ...))
            (gen-cata-matcher #'match-loop expr #'(y ...))]
           [(pat1 ell pat2 ... . pat3)
            (ellipsis? #'ell)
            (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
           [,u (underscore? #'u)     ; underscore is wild
-           (values invoke '() '())] ; succeed with no bindings
+           (values invoke '() '())] ; no bindings
           [,x
            (identifier? #'x)
            (gen-variable-matcher expr #'x)]
@@ -143,12 +152,14 @@
            (list (make-pattern-variable #'x expr 0))
            (list (make-cata-binding cata-op ids #'x)))))
 
+      ;;; Match expr by binding a pattern variable named *id* to it.
       (define (gen-variable-matcher expr id)
         (values
          invoke
          (list (make-pattern-variable id expr 0))
          '()))
 
+      ;;; Match expr against the constant obj.
       (define (gen-constant-matcher expr obj)
         (values
          (lambda (succeed)
@@ -158,6 +169,8 @@
          '()
          '()))
 
+      ;;; Match the head of expr with car-pat and its tail with
+      ;;; cdr-pat.
       (define (gen-pair-matcher expr car-pat cdr-pat)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           (let*-values ([(mat1 pvars1 catas1)
@@ -190,7 +203,7 @@
              (append pvars1 pvars2)
              (append catas1 catas2)))))
 
-      ;; Match the empty list.
+      ;;; Match the empty list.
       (define (gen-null-matcher expr)
         (values (lambda (succeed)
                   #`(if (null? #,expr)
@@ -199,6 +212,7 @@
                 '()
                 '()))
 
+      ;;; Match expr recursively against the list pattern pat*.
       (define (gen-matcher* expr pat*)
         (syntax-case pat* (unquote)
           [() (gen-null-matcher expr)]
@@ -238,6 +252,9 @@
                (make-meta-variables #'(u ...) ipvars)
                catas)))))
 
+      ;;; Build a list of pattern-variables with the same names as
+      ;;; the pvars, but of higher level. These are bound to the
+      ;;; expressions denoted by the ids.
       (define (make-meta-variables ids pvars)
         (map (lambda (id pvar)
                (make-pattern-variable
@@ -317,8 +334,10 @@
          #'(assertion-violation 'who "value does not match" expr-val)
          cl*))
 
-      ;; Binds the 'match-loop' & 'expr-val' identifiers which are
-      ;; referenced by generated matchers.
+      ;;; Emit the main pattern-matching loop, then the matcher body.
+      ;;;
+      ;;; Binds the 'match-loop' & 'expr-val' identifiers which are
+      ;;; referenced by generated matchers.
       (syntax-case stx ()
         [(k expr cl ...)
          #`(let match-loop ([expr-val expr])
