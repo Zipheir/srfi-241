@@ -236,14 +236,17 @@
                          (let ([e1 (car e2)])
                            #,(mat (lambda ()
                                     #`(f (cdr e2) (cons v u) ...)))))))
-               (map
-                (lambda (id pvar)
-                  (make-pattern-variable
-                   (pattern-variable-identifier pvar)
-                   id
-                   (+ (pattern-variable-level pvar) 1)))
-                #'(u ...) ipvars)
+               (make-meta-variables #'(u ...) ipvars)
                catas)))))
+
+      (define (make-meta-variables ids pvars)
+        (map (lambda (id pvar)
+               (make-pattern-variable
+                (pattern-variable-identifier pvar)
+                id
+                (+ (pattern-variable-level pvar) 1)))
+             ids
+             pvars))
 
       (define (gen-map-values proc-expr y* e n)
         (let f ([n n])
