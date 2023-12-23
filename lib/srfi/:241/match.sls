@@ -186,17 +186,18 @@
                      (fail)))
              (append pvars1 pvars2) (append catas1 catas2)))))
 
-      (define (gen-ellipsis-matcher expr pat1 pat2* pat3)
+      (define (gen-ellipsis-matcher expr head-pat body-pat* tail-pat)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           (let*-values ([(mat1 pvars1 catas1)
-                         (gen-map #'e1 pat1)]
+                         (gen-map #'e1 head-pat)]
+                        [(rest-pat*) (append body-pat* tail-pat)]
                         [(mat2 pvars2 catas2)
-                         (gen-matcher* #'e2 (append pat2* pat3))])
+                         (gen-matcher* #'e2 rest-pat*)])
             (values
              (lambda (succeed)
                #`(split/continuations
                   #,expr
-                  #,(length pat2*)
+                  #,(length body-pat*)
                   (lambda (e1 e2)
                     #,(mat1 (lambda () (mat2 succeed))))
                   fail))
@@ -254,14 +255,14 @@
 
       ;;; Build a list of pattern-variables with the same names as
       ;;; the pvars, but of higher level. These are bound to the
-      ;;; expressions denoted by the ids.
-      (define (make-meta-variables ids pvars)
+      ;;; expr-ids.
+      (define (make-meta-variables expr-ids pvars)
         (map (lambda (id pvar)
                (make-pattern-variable
                 (pattern-variable-identifier pvar)
                 id
                 (+ (pattern-variable-level pvar) 1)))
-             ids
+             expr-ids
              pvars))
 
       (define (gen-map-values proc-expr y* e n)
