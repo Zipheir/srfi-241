@@ -55,7 +55,9 @@
                (for-each
                 (lambda (tmpl vars)
                   (when (null? vars)
-                    (quasiquote-syntax-violation #'tmpl "no substitutions to repeat here")))
+                    (quasiquote-syntax-violation
+                     #'tmpl
+                     "no substitutions to repeat here")))
                 tmpl* vars*)
                (with-syntax ([((tmp** ...) ...)
                               (map (lambda (vars)
