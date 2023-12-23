@@ -70,18 +70,18 @@
                           id))
 
       (define (check-pattern-variables pvars)
-        (let ([ht (make-identifier-hashtable)])
-          (for-each
-           (lambda (pvar)
-             (let ([id (pattern-variable-identifier pvar)])
-               (hashtable-update! ht
-                                  id
-                                  (lambda (val)
-                                    (when val
-                                      (repeated-pvar-error id))
-                                    #t)
-                                  #f)))
-           pvars)))
+        (define ht (make-identifier-hashtable))
+
+        (define (mark id)
+          (lambda (val)
+            (when val (repeated-pvar-error id))
+            #t))
+
+        (for-each
+         (lambda (pvar)
+           (let ([id (pattern-variable-identifier pvar)])
+             (hashtable-update! ht id (mark id) #f)))
+         pvars))
 
       (define (repeated-cata-var-error id)
         (syntax-violation who
@@ -90,20 +90,20 @@
                           id))
 
       (define (check-cata-bindings catas)
-        (let ([ht (make-identifier-hashtable)])
-          (for-each
-           (lambda (cata)
-             (for-each
-              (lambda (id)
-                (hashtable-update! ht
-                                   id
-                                   (lambda (val)
-                                     (when val
-                                       (repeated-cata-var-error id))
-                                     #t)
-                                   #f))
-              (cata-binding-value-id* cata)))
-           catas)))
+        (define ht (make-identifier-hashtable))
+
+        (define (mark id)
+          (lambda (val)
+            (when val (repeated-cata-var-error id))
+            #t))
+
+        (for-each
+         (lambda (cata)
+           (for-each
+            (lambda (id)
+              (hashtable-update! ht id (mark id) #f))
+            (cata-binding-value-id* cata)))
+         catas))
 
       (define (parse-clause cl)
         (syntax-case cl (guard)
