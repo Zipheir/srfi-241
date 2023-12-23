@@ -249,7 +249,7 @@
              pvars))
 
       (define (gen-map-values proc-expr y* e n)
-        (let f ([n n])
+        (let gen-loop ([n n])
           (if (zero? n)
               #`(#,proc-expr #,e)
               (with-syntax ([(tmps ...)
@@ -257,15 +257,15 @@
                             [(tmp ...)
                              (generate-temporaries y*)]
                             [e e])
-                #`(let f ([e* (reverse e)]
-                          [tmps '()] ...)
+                #`(let loop ([e* (reverse e)]
+                             [tmps '()] ...)
                     (if (null? e*)
                         (values tmps ...)
                         (let ([e (car e*)]
                               [e* (cdr e*)])
                           (let-values ([(tmp ...)
-                                        #,(f (- n 1))])
-                            (f e* (cons tmp tmps) ...)))))))))
+                                        #,(gen-loop (- n 1))])
+                            (loop e* (cons tmp tmps) ...)))))))))
 
       (define (gen-clause k cl)
         (let*-values ([(pat guard-expr body)
