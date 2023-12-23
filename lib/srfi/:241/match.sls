@@ -285,7 +285,8 @@
                      (if #,guard-expr
                          (let ([tmp f] ...)
                            (let-values ([(y ...) e] ...)
-                             (let-syntax ([quasiquote quasiquote-transformer])
+                             (let-syntax ([quasiquote
+                                           quasiquote-transformer])
                                #,@body)))
                          (fail)))))))))
 
