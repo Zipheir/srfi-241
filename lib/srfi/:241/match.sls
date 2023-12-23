@@ -275,18 +275,10 @@
                          (map cata-binding-value-id* catas)]
                         [(z ...) (map cata-binding-identifier catas)]
                         [(tmp ...) (generate-temporaries catas)])
-            (with-syntax ([(e ...)
-                           (map
-                            (lambda (tmp y* z)
-                              (let ([n
-                                     (exists
-                                      (lambda (pvar)
-                                        (let ([x (pattern-variable-identifier pvar)])
-                                          (and (bound-identifier=? x z)
-                                               (pattern-variable-level pvar))))
-                                      pvars)])
-                                (gen-map-values tmp y* z n)))
-                            #'(tmp ...) #'((y ...) ...) #'(z ...))])
+            (with-syntax ([(e ...) (make-cata-values pvars
+                                                     #'(tmp ...)
+                                                     #'((y ...) ...)
+                                                     #'(z ...))])
               (matcher
                (lambda ()
                  #`(let ([x u] ...)
@@ -296,6 +288,20 @@
                              (let-syntax ([quasiquote quasiquote-transformer])
                                #,@body)))
                          (fail)))))))))
+
+      (define (make-cata-values pvars tmps val-ids bind-ids)
+        (define (bind-id-level z)
+          (exists (lambda (pvar)
+                    (let ([x (pattern-variable-identifier pvar)])
+                      (and (bound-identifier=? x z)
+                           (pattern-variable-level pvar))))
+                  pvars))
+
+        (map (lambda (tmp y* z)
+               (gen-map-values tmp y* z (bind-id-level z)))
+             tmps
+             val-ids
+             bind-ids))
 
       (define (gen-match k cl*)
         (fold-right
