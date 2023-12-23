@@ -186,18 +186,18 @@
                      (fail)))
              (append pvars1 pvars2) (append catas1 catas2)))))
 
-      (define (gen-ellipsis-matcher expr head-pat body-pat* tail-pat)
+      (define (gen-ellipsis-matcher expr head-pat body-pats tail-pat)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           (let*-values ([(mat1 pvars1 catas1)
                          (gen-map #'e1 head-pat)]
-                        [(rest-pat*) (append body-pat* tail-pat)]
+                        [(rest-pat*) (append body-pats tail-pat)]
                         [(mat2 pvars2 catas2)
                          (gen-matcher* #'e2 rest-pat*)])
             (values
              (lambda (succeed)
                #`(split/continuations
                   #,expr
-                  #,(length body-pat*)
+                  #,(length body-pats)
                   (lambda (e1 e2)
                     #,(mat1 (lambda () (mat2 succeed))))
                   fail))
