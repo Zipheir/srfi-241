@@ -86,19 +86,19 @@
                           id))
 
       ;;; Check a list of pattern-variables for duplicates.
-      (define (check-pattern-variables pvars)
+      (define (check-pattern-variables variables)
         (define id-table (make-identifier-hashtable))
 
         (define (mark id)
-          (lambda (val)
-            (when val (repeated-pvar-error id))
+          (lambda (x)
+            (when x (repeated-pvar-error id))
             #t))
 
         (for-each
-         (lambda (pvar)
-           (let ([id (pattern-variable-identifier pvar)])
+         (lambda (v)
+           (let ([id (pattern-variable-identifier v)])
              (hashtable-update! id-table id (mark id) #f)))
-         pvars))
+         variables))
 
       (define (repeated-cata-var-error id)
         (syntax-violation who
@@ -112,8 +112,8 @@
         (define id-table (make-identifier-hashtable))
 
         (define (mark id)
-          (lambda (val)
-            (when val (repeated-cata-var-error id))
+          (lambda (x)
+            (when x (repeated-cata-var-error id))
             #t))
 
         (for-each
@@ -173,25 +173,25 @@
            (ill-formed-match-pattern-violation)]
           [_ (generate-constant-matcher expression pattern)]))
 
-      (define (generate-cata-matcher cata-op expr ids)
+      (define (generate-cata-matcher operator expression ids)
         (with-syntax ([(x) (generate-temporaries '(x))])
           (values
            invoke
-           (list (make-pattern-variable #'x expr 0))
-           (list (make-cata-binding cata-op ids #'x)))))
+           (list (make-pattern-variable #'x expression 0))
+           (list (make-cata-binding operator ids #'x)))))
 
       ;;; Match expr by binding a pattern variable named *id* to it.
-      (define (generate-variable-matcher expr id)
+      (define (generate-variable-matcher expression id)
         (values
          invoke
-         (list (make-pattern-variable id expr 0))
+         (list (make-pattern-variable id expression 0))
          '()))
 
-      ;;; Match expr against the constant obj.
-      (define (generate-constant-matcher expr obj)
+      ;;; Match expr against the constant object.
+      (define (generate-constant-matcher expression object)
         (values
          (lambda (succeed)
-           #`(if (equal? #,expr '#,obj)
+           #`(if (equal? #,expression '#,object)
                  #,(succeed)
                  (#,(fail-clause))))
          '()
@@ -199,12 +199,12 @@
 
       ;;; Match the head of expr with car-pat and its tail with
       ;;; cdr-pat.
-      (define (generate-pair-matcher expr car-pat cdr-pat)
+      (define (generate-pair-matcher expr car-pattern cdr-pattern)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           (let*-values ([(mat1 pvars1 catas1)
-                         (generate-matcher #'e1 car-pat)]
+                         (generate-matcher #'e1 car-pattern)]
                         [(mat2 pvars2 catas2)
-                         (generate-matcher #'e2 cdr-pat)])
+                         (generate-matcher #'e2 cdr-pattern)])
             (values
              (lambda (succeed)
                #`(if (pair? #,expr)
@@ -214,18 +214,22 @@
                      (#,(fail-clause))))
              (append pvars1 pvars2) (append catas1 catas2)))))
 
-      (define (generate-ellipsis-matcher expr head-pat body-pats tail-pat)
+      (define (generate-ellipsis-matcher expression
+                                         head-pattern
+                                         body-patterns
+                                         tail-pattern)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           (let*-values ([(mat1 pvars1 catas1)
-                         (generate-map #'e1 head-pat)]
-                        [(rest-pat*) (append body-pats tail-pat)]
+                         (generate-map #'e1 head-pattern)]
+                        [(rest-patterns)
+                         (append body-patterns tail-pattern)]
                         [(mat2 pvars2 catas2)
-                         (generate-matcher* #'e2 rest-pat*)])
+                         (generate-list-matcher #'e2 rest-patterns)])
             (values
              (lambda (succeed)
                #`(split-right/continuations
-                  #,expr
-                  #,(length body-pats)
+                  #,expression
+                  #,(length body-patterns)
                   (lambda (e1 e2)
                     #,(mat1 (lambda () (mat2 succeed))))
                   #,(fail-clause)))
@@ -233,45 +237,46 @@
              (append catas1 catas2)))))
 
       ;;; Match the empty list.
-      (define (generate-null-matcher expr)
+      (define (generate-null-matcher expression)
         (values (lambda (succeed)
-                  #`(if (null? #,expr)
+                  #`(if (null? #,expression)
                         #,(succeed)
                         (#,(fail-clause))))
                 '()
                 '()))
 
-      ;;; Match expr recursively against the list pattern pat*.
-      (define (generate-matcher* expr pat*)
-        (syntax-case pat* (unquote)
-          [() (generate-null-matcher expr)]
-          [,x (generate-matcher expr pat*)]
-          [(pat . pat*)
+      ;;; Match expression recursively against patterns.
+      (define (generate-list-matcher expression patterns)
+        (syntax-case patterns (unquote)
+          [() (generate-null-matcher expression)]
+          [,x (generate-matcher expression patterns)]
+          [(pat . rest-patterns)
            (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
              (let*-values ([(mat1 pvars1 catas1)
                             (generate-matcher #'e1 #'pat)]
                            [(mat2 pvars2 catas2)
-                            (generate-matcher* #'e2 #'pat*)]) ; recur
+                            (generate-list-matcher #'e2 #'rest-patterns)]) ; recur
                (values
                 (lambda (succeed)
-                  #`(let ([e1 (car #,expr)]
-                          [e2 (cdr #,expr)])
+                  #`(let ([e1 (car #,expression)]
+                          [e2 (cdr #,expression)])
                       #,(mat1
                          (lambda ()
                            (mat2 succeed)))))
                 (append pvars1 pvars2)
                 (append catas1 catas2))))]
-          [_ (generate-matcher expr pat*)]))
+          [_ (generate-matcher expression patterns)]))
 
-      (define (generate-map expr pat)
+      (define (generate-map expression pattern)
         (with-syntax ([(e1 e2 f) (generate-temporaries '(e1 e2 f))])
-          (let-values ([(mat ipvars catas) (generate-matcher #'e1 pat)])
+          (let-values ([(mat ipvars catas)
+                        (generate-matcher #'e1 pattern)])
             (with-syntax ([(u ...) (generate-temporaries ipvars)]
                           [(v ...)
                            (map pattern-variable-expression ipvars)])
               (values
                (lambda (succeed)
-                 #`(let f ([e2 (reverse #,expr)]
+                 #`(let f ([e2 (reverse #,expression)]
                            [u '()] ...)
                      (if (null? e2)
                          #,(succeed)
@@ -282,24 +287,25 @@
                catas)))))
 
       ;;; Build a list of pattern-variables with the same names as
-      ;;; the pvars, but of higher level. These are bound to the
-      ;;; expr-ids.
-      (define (make-meta-variables expr-ids pvars)
-        (map (lambda (id pvar)
+      ;;; the variables, but of higher level. These are bound to the
+      ;;; expression-ids.
+      (define (make-meta-variables expression-ids variables)
+        (map (lambda (id v)
                (make-pattern-variable
-                (pattern-variable-identifier pvar)
+                (pattern-variable-identifier v)
                 id
-                (+ (pattern-variable-level pvar) 1)))
-             expr-ids
-             pvars))
+                (+ (pattern-variable-level v) 1)))
+             expression-ids
+             variables))
 
-      (define (generate-map-values proc-expr y* e n)
-        (let generate-loop ([n n])
-          (if (zero? n)
-              #`(#,proc-expr #,e)
-              (with-syntax ([(tmps ...) (generate-temporaries y*)]
-                            [(tmp ...) (generate-temporaries y*)]
-                            [e e])
+      (define (generate-map-values operator value-ids binding level)
+        (let generate-loop ([level level])
+          (if (zero? level)
+              #`(#,operator #,binding)
+              ;; FIXME: Better names.
+              (with-syntax ([(tmps ...) (generate-temporaries value-ids)]
+                            [(tmp ...) (generate-temporaries value-ids)]
+                            [e binding])
                 #`(let loop ([e* (reverse e)]
                              [tmps '()] ...)
                     (if (null? e*)
@@ -307,16 +313,17 @@
                         (let ([e (car e*)]
                               [e* (cdr e*)])
                           (let-values ([(tmp ...)
-                                        #,(generate-loop (- n 1))])
+                                        #,(generate-loop (- level 1))])
                             (loop e* (cons tmp tmps) ...)))))))))
 
-      (define (generate-clause k expression-id cl)
-        (let*-values ([(pat guard-expr body) (parse-clause cl)]
+      (define (generate-clause keyword expression-id clause)
+        (let*-values ([(pattern guard-expression body)
+                       (parse-clause clause)]
                       [(matcher pvars catas)
-                       (generate-matcher expression-id pat)])
+                       (generate-matcher expression-id pattern)])
           (check-pattern-variables pvars)
           (check-cata-bindings catas)
-          (with-syntax ([quasiquote (datum->syntax k 'quasiquote)]
+          (with-syntax ([quasiquote (datum->syntax keyword 'quasiquote)]
                         [(x ...)
                          (map pattern-variable-identifier pvars)]
                         [(u ...)
@@ -333,7 +340,7 @@
               (matcher
                (lambda ()
                  #`(let ([x u] ...)
-                     (if #,guard-expr
+                     (if #,guard-expression
                          (let ([tmp f] ...)
                            (let-values ([(y ...) e] ...)
                              (let-syntax ([quasiquote
@@ -341,31 +348,34 @@
                                #,@body)))
                          (#,(fail-clause))))))))))
 
-      (define (make-cata-values pvars tmps val-ids bind-ids)
-        (define (bind-id-level z)
-          (exists (lambda (pvar)
-                    (let ([x (pattern-variable-identifier pvar)])
-                      (and (bound-identifier=? x z)
-                           (pattern-variable-level pvar))))
-                  pvars))
+      (define (make-cata-values variables
+                                temporaries
+                                value-ids
+                                meta-ids)
+        (define (meta-id-level id)
+          (exists (lambda (v)
+                    (let ([x (pattern-variable-identifier v)])
+                      (and (bound-identifier=? x id)
+                           (pattern-variable-level v))))
+                  variables))
 
-        (map (lambda (tmp y* z)
-               (generate-map-values tmp y* z (bind-id-level z)))
-             tmps
-             val-ids
-             bind-ids))
+        (map (lambda (t ids b)
+               (generate-map-values t ids b (meta-id-level b)))
+             temporaries
+             value-ids
+             meta-ids))
 
-      (define (generate-match k expression-id cl*)
+      (define (generate-match keyword expression-id clauses)
         (fold-right
-         (lambda (cl rest)
+         (lambda (clause rest)
            (with-syntax ([(fail) (generate-temporaries '(fail))])
              (parameterize ([fail-clause #'fail])
                #`(let ([fail (lambda () #,rest)])
-                   #,(generate-clause k expression-id cl)))))
+                   #,(generate-clause keyword expression-id clause)))))
          #`(assertion-violation 'who
                                 "value does not match"
                                 #,expression-id)
-         cl*))
+         clauses))
 
       ;;; Emit the main pattern-matching loop, then the matcher body.
       ;;;
