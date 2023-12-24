@@ -227,7 +227,7 @@
                                          tail-pattern)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           (let*-values ([(mat1 pvars1 catas1)
-                         (generate-map #'e1 head-pattern)]
+                         (generate-glob-matcher #'e1 head-pattern)]
                         [(rest-patterns)
                          (append body-patterns tail-pattern)]
                         [(mat2 pvars2 catas2)
@@ -275,23 +275,30 @@
                 (append catas1 catas2))))]
           [_ (generate-matcher expression patterns)]))
 
-      (define (generate-map expression pattern)
-        (with-syntax ([(e1 e2 f) (generate-temporaries '(e1 e2 f))])
+      ;; Build a matcher for an ellipsized pattern. This generates
+      ;; meta-variables (pattern variables with level > 1) to hold
+      ;; the lists of values matched by *pattern's* variables.
+      (define (generate-glob-matcher expression pattern)
+        (with-syntax ([(head rest loop)
+                       (generate-temporaries '(head rest loop))])
           (let-values ([(mat ipvars catas)
-                        (generate-matcher #'e1 pattern)])
-            (with-syntax ([(u ...) (generate-temporaries ipvars)]
-                          [(v ...)
+                        (generate-matcher #'head pattern)])
+            (with-syntax ([(a ...)   ; ids for value accumulators
+                           (generate-temporaries ipvars)]
+                          [(ve ...)
                            (map pattern-variable-expression ipvars)])
               (values
                (lambda (succeed)
-                 #`(let f ([e2 (reverse #,expression)]
-                           [u '()] ...)
-                     (if (null? e2)
+                 #`(let loop ([rest (reverse #,expression)]
+                              [a '()] ...)
+                     (if (null? rest)
                          #,(succeed)
-                         (let ([e1 (car e2)])
-                           #,(mat (lambda ()
-                                    #`(f (cdr e2) (cons v u) ...)))))))
-               (make-meta-variables #'(u ...) ipvars)
+                         (let ([head (car rest)])
+                           #,(mat
+                              (lambda ()
+                                #`(loop (cdr rest)
+                                        (cons ve a) ...)))))))
+               (make-meta-variables #'(a ...) ipvars)
                catas)))))
 
       ;;; Build a list of pattern-variables with the same names as
