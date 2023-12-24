@@ -133,11 +133,16 @@
           [(pattern body1 body2 ...)
            (values #'pattern #'#t #'(body1 body2 ...))]
           [_
-           (syntax-violation who "ill-formed match clause" form clause)]))
+           (syntax-violation who
+                             "ill-formed match clause"
+                             form
+                             clause)]))
 
       (define (generate-matcher expression pattern)
         (define (ill-formed-match-pattern-violation)
-          (syntax-violation who "ill-formed match pattern" form pattern))
+          (syntax-violation who
+                            "ill-formed match pattern"
+                            form pattern))
 
         (syntax-case pattern (-> unquote)
           [,[cata-operator -> y ...]           ; Named cata-pattern
@@ -255,7 +260,8 @@
              (let*-values ([(mat1 pvars1 catas1)
                             (generate-matcher #'e1 #'pat)]
                            [(mat2 pvars2 catas2)
-                            (generate-list-matcher #'e2 #'rest-patterns)]) ; recur
+                            (generate-list-matcher #'e2  ; recur
+                                                   #'rest-patterns)])
                (values
                 (lambda (succeed)
                   #`(let ([e1 (car #,expression)]
@@ -303,7 +309,8 @@
           (if (zero? level)
               #`(#,operator #,binding)
               ;; FIXME: Better names.
-              (with-syntax ([(tmps ...) (generate-temporaries value-ids)]
+              (with-syntax ([(tmps ...)
+                             (generate-temporaries value-ids)]
                             [(tmp ...) (generate-temporaries value-ids)]
                             [e binding])
                 #`(let loop ([e* (reverse e)]
@@ -328,10 +335,12 @@
                          (map pattern-variable-identifier pvars)]
                         [(u ...)
                          (map pattern-variable-expression pvars)]
-                        [(f ...) (map cata-binding-procedure-expression catas)]
+                        [(f ...)
+                         (map cata-binding-procedure-expression catas)]
                         [((y ...) ...)
                          (map cata-binding-value-identifiers catas)]
-                        [(z ...) (map cata-binding-meta-identifier catas)]
+                        [(z ...)
+                         (map cata-binding-meta-identifier catas)]
                         [(tmp ...) (generate-temporaries catas)])
             (with-syntax ([(e ...) (make-cata-values pvars
                                                      #'(tmp ...)
