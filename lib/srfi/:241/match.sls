@@ -59,9 +59,9 @@
 
       (define-record-type cata-binding
         (nongenerative) (sealed #t) (opaque #t)
-        (fields proc-expr    ; Catamorphism operator
-                value-id*    ; Identifiers binding cata values
-                identifier)) ; Name of meta pattern-variable
+        (fields procedure-expression ; Catamorphism operator
+                value-identifiers    ; Identifiers binding cata values
+                meta-identifier))    ; Name of meta pattern-variable
 
       (define (identifier-hash id)
         (assert (identifier? id))
@@ -112,7 +112,7 @@
            (for-each
             (lambda (id)
               (hashtable-update! ht id (mark id) #f))
-            (cata-binding-value-id* cata)))
+            (cata-binding-value-identifiers cata)))
          catas))
 
       ;;; Parse a match clause and return the pattern, guard, and
@@ -299,10 +299,10 @@
                          (map pattern-variable-identifier pvars)]
                         [(u ...)
                          (map pattern-variable-expression pvars)]
-                        [(f ...) (map cata-binding-proc-expr catas)]
+                        [(f ...) (map cata-binding-procedure-expression catas)]
                         [((y ...) ...)
-                         (map cata-binding-value-id* catas)]
-                        [(z ...) (map cata-binding-identifier catas)]
+                         (map cata-binding-value-identifiers catas)]
+                        [(z ...) (map cata-binding-meta-identifier catas)]
                         [(tmp ...) (generate-temporaries catas)])
             (with-syntax ([(e ...) (make-cata-values pvars
                                                      #'(tmp ...)
