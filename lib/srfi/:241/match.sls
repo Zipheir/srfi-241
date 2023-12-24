@@ -389,9 +389,6 @@
          clauses))
 
       ;;; Emit the main pattern-matching loop, then the matcher body.
-      ;;;
-      ;;; Binds the 'match-loop' & 'expr-val' identifiers which are
-      ;;; referenced by generated matchers.
       (syntax-case form ()
         [(match expression clause ...)
          (with-syntax ([(lp ev) (generate-temporaries '(lp ev))])
