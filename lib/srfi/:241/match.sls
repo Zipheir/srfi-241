@@ -31,8 +31,8 @@
           (srfi :241 match quasiquote-transformer))
 
   (define-syntax ->
-    (lambda (stx)
-      (syntax-violation '-> "invalid use of auxiliary syntax" stx)))
+    (lambda (form)
+      (syntax-violation '-> "invalid use of auxiliary syntax" form)))
 
   ;;; Split the (im)proper list obj into a head and tail, where the
   ;;; tail is of cons-length k. Pass these values to succ, or call
@@ -47,7 +47,7 @@
           (fail))))
 
   (define-syntax match
-    (lambda (stx)
+    (lambda (form)
       (define who 'match)
 
       ;; Holds the identifier denoting the matcher's main loop.
@@ -82,7 +82,7 @@
       (define (repeated-pvar-error id)
         (syntax-violation who
                           "repeated pattern variable in match clause"
-                          stx
+                          form
                           id))
 
       ;;; Check a list of pattern-variables for duplicates.
@@ -103,7 +103,7 @@
       (define (repeated-cata-var-error id)
         (syntax-violation who
                           "repeated cata variable in match clause"
-                          stx
+                          form
                           id))
 
       ;;; Check a list of cata-variables for duplicates. Only
@@ -133,11 +133,11 @@
           [(pattern body1 body2 ...)
            (values #'pattern #'#t #'(body1 body2 ...))]
           [_
-           (syntax-violation who "ill-formed match clause" stx clause)]))
+           (syntax-violation who "ill-formed match clause" form clause)]))
 
       (define (generate-matcher expression pattern)
         (define (ill-formed-match-pattern-violation)
-          (syntax-violation who "ill-formed match pattern" stx pattern))
+          (syntax-violation who "ill-formed match pattern" form pattern))
 
         (syntax-case pattern (-> unquote)
           [,[cata-operator -> y ...]           ; Named cata-pattern
@@ -371,7 +371,7 @@
       ;;;
       ;;; Binds the 'match-loop' & 'expr-val' identifiers which are
       ;;; referenced by generated matchers.
-      (syntax-case stx ()
+      (syntax-case form ()
         [(match expression clause ...)
          (with-syntax ([(lp ev) (generate-temporaries '(lp ev))])
            (parameterize ([match-loop-id #'lp])
