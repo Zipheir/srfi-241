@@ -138,12 +138,13 @@
                              form
                              clause)]))
 
-      (define (generate-matcher expression pattern)
-        (define (ill-formed-match-pattern-violation)
-          (syntax-violation who
-                            "ill-formed match pattern"
-                            form pattern))
+      (define (ill-formed-match-pattern-violation pattern)
+        (syntax-violation who
+                          "ill-formed match pattern"
+                          form
+                          pattern))
 
+      (define (generate-matcher expression pattern)
         (syntax-case pattern (-> unquote)
           [,[cata-operator -> y ...]           ; Named cata-pattern
            (for-all identifier? #'(y ...))
@@ -175,7 +176,7 @@
                                   #'car-pattern
                                   #'cdr-pattern)]
           [unquote
-           (ill-formed-match-pattern-violation)]
+           (ill-formed-match-pattern-violation pattern)]
           [_ (generate-constant-matcher expression pattern)]))
 
       (define (generate-cata-matcher operator expression ids)
