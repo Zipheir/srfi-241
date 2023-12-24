@@ -359,8 +359,8 @@
       ;;; Binds the 'match-loop' & 'expr-val' identifiers which are
       ;;; referenced by generated matchers.
       (syntax-case stx ()
-        [(k expr cl ...)
-         #`(let match-loop ([expr-val expr])
-             #,(generate-match #'k #'(cl ...)))])))
+        [(match expression clause ...)
+         #`(let match-loop ([expr-val expression])
+             #,(generate-match #'match #'(clause ...)))])))
 
   )
