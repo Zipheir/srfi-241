@@ -78,7 +78,7 @@
 
       ;;; Check a list of pattern-variables for duplicates.
       (define (check-pattern-variables pvars)
-        (define ht (make-identifier-hashtable))
+        (define id-table (make-identifier-hashtable))
 
         (define (mark id)
           (lambda (val)
@@ -88,7 +88,7 @@
         (for-each
          (lambda (pvar)
            (let ([id (pattern-variable-identifier pvar)])
-             (hashtable-update! ht id (mark id) #f)))
+             (hashtable-update! id-table id (mark id) #f)))
          pvars))
 
       (define (repeated-cata-var-error id)
@@ -100,7 +100,7 @@
       ;;; Check a list of cata-variables for duplicates. Only
       ;;; cata value-ids are checked.
       (define (check-cata-bindings catas)
-        (define ht (make-identifier-hashtable))
+        (define id-table (make-identifier-hashtable))
 
         (define (mark id)
           (lambda (val)
@@ -111,7 +111,7 @@
          (lambda (cata)
            (for-each
             (lambda (id)
-              (hashtable-update! ht id (mark id) #f))
+              (hashtable-update! id-table id (mark id) #f))
             (cata-binding-value-identifiers cata)))
          catas))
 
