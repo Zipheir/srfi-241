@@ -117,12 +117,14 @@
 
       ;;; Parse a match clause and return the pattern, guard, and
       ;;; body as multiple values.
-      (define (parse-clause cl)
-        (syntax-case cl (guard)
-          [(pat (guard guard-expr ...) e1 e2 ...)
-           (values #'pat #'(and guard-expr ...) #'(e1 e2 ...))]
-          [(pat e1 e2 ...) (values #'pat #'#t #'(e1 e2 ...))]
-          [_ (syntax-violation who "ill-formed match clause" stx cl)]))
+      (define (parse-clause clause)
+        (syntax-case clause (guard)
+          [(pattern (guard guard1 ...) body1 body2 ...)
+           (values #'pattern #'(and guard1 ...) #'(body1 body2 ...))]
+          [(pattern body1 body2 ...)
+           (values #'pattern #'#t #'(body1 body2 ...))]
+          [_
+           (syntax-violation who "ill-formed match clause" stx clause)]))
 
       (define (generate-matcher expr pat)
         (define (ill-formed-match-pattern-violation)
