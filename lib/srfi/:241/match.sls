@@ -26,6 +26,7 @@
   (export match
           unquote ... -> guard)
   (import (rnrs (6))
+          (srfi :39 parameters)
           (srfi :241 match helpers)
           (srfi :241 match quasiquote-transformer))
 
@@ -48,6 +49,14 @@
   (define-syntax match
     (lambda (stx)
       (define who 'match)
+
+      ;; Holds the identifier denoting the matcher's main loop.
+      ;; Used by anonymous cata matchers.
+      (define match-loop-id (make-parameter #f))
+
+      ;; Holds the identifier denoting the failure continuation for
+      ;; each match clause.
+      (define fail-clause (make-parameter #f))
 
       (define (invoke success) (success))
 
@@ -136,7 +145,7 @@
            (generate-cata-matcher #'cata-operator expression #'(y ...))]
           [,[y ...]                ; Anonymous cata-pattern
            (for-all identifier? #'(y ...))
-           (generate-cata-matcher #'match-loop expression #'(y ...))]
+           (generate-cata-matcher (match-loop-id) expression #'(y ...))]
           ;; Match this explicitly to avoid matching 'unquote' in a
           ;; tail pattern.
           [(head ellipsis body ... . ,x)
@@ -184,7 +193,7 @@
          (lambda (succeed)
            #`(if (equal? #,expr '#,obj)
                  #,(succeed)
-                 (fail)))
+                 (#,(fail-clause))))
          '()
          '()))
 
@@ -202,7 +211,7 @@
                      (let ([e1 (car #,expr)]
                            [e2 (cdr #,expr)])
                        #,(mat1 (lambda () (mat2 succeed))))
-                     (fail)))
+                     (#,(fail-clause))))
              (append pvars1 pvars2) (append catas1 catas2)))))
 
       (define (generate-ellipsis-matcher expr head-pat body-pats tail-pat)
@@ -219,7 +228,7 @@
                   #,(length body-pats)
                   (lambda (e1 e2)
                     #,(mat1 (lambda () (mat2 succeed))))
-                  fail))
+                  #,(fail-clause)))
              (append pvars1 pvars2)
              (append catas1 catas2)))))
 
@@ -228,7 +237,7 @@
         (values (lambda (succeed)
                   #`(if (null? #,expr)
                         #,(succeed)
-                        (fail)))
+                        (#,(fail-clause))))
                 '()
                 '()))
 
@@ -301,10 +310,10 @@
                                         #,(generate-loop (- n 1))])
                             (loop e* (cons tmp tmps) ...)))))))))
 
-      (define (generate-clause k cl)
+      (define (generate-clause k expression-id cl)
         (let*-values ([(pat guard-expr body) (parse-clause cl)]
                       [(matcher pvars catas)
-                       (generate-matcher #'expr-val pat)])
+                       (generate-matcher expression-id pat)])
           (check-pattern-variables pvars)
           (check-cata-bindings catas)
           (with-syntax ([quasiquote (datum->syntax k 'quasiquote)]
@@ -330,7 +339,7 @@
                              (let-syntax ([quasiquote
                                            quasiquote-transformer])
                                #,@body)))
-                         (fail)))))))))
+                         (#,(fail-clause))))))))))
 
       (define (make-cata-values pvars tmps val-ids bind-ids)
         (define (bind-id-level z)
@@ -346,12 +355,16 @@
              val-ids
              bind-ids))
 
-      (define (generate-match k cl*)
+      (define (generate-match k expression-id cl*)
         (fold-right
          (lambda (cl rest)
-           #`(let ([fail (lambda () #,rest)])
-               #,(generate-clause k cl)))
-         #'(assertion-violation 'who "value does not match" expr-val)
+           (with-syntax ([(fail) (generate-temporaries '(fail))])
+             (parameterize ([fail-clause #'fail])
+               #`(let ([fail (lambda () #,rest)])
+                   #,(generate-clause k expression-id cl)))))
+         #`(assertion-violation 'who
+                                "value does not match"
+                                #,expression-id)
          cl*))
 
       ;;; Emit the main pattern-matching loop, then the matcher body.
@@ -360,7 +373,9 @@
       ;;; referenced by generated matchers.
       (syntax-case stx ()
         [(match expression clause ...)
-         #`(let match-loop ([expr-val expression])
-             #,(generate-match #'match #'(clause ...)))])))
+         (with-syntax ([(lp ev) (generate-temporaries '(lp ev))])
+           (parameterize ([match-loop-id #'lp])
+             #`(let lp ([ev expression])
+                 #,(generate-match #'match #'ev #'(clause ...)))))])))
 
   )
