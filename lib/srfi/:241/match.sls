@@ -151,8 +151,8 @@
                                       #'head
                                       #'(body ...)
                                       #'tail)]
-          [,underscore (underscore? #'underscore)  ; underscore is wild
-           (values invoke '() '())]                ; no bindings
+          [,u (underscore? #'u)      ; underscore is wild
+           (values invoke '() '())]  ; no bindings
           [,x
            (identifier? #'x)
            (generate-variable-matcher expression #'x)]
