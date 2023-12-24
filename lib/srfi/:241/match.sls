@@ -124,34 +124,34 @@
           [(pat e1 e2 ...) (values #'pat #'#t #'(e1 e2 ...))]
           [_ (syntax-violation who "ill-formed match clause" stx cl)]))
 
-      (define (gen-matcher expr pat)
+      (define (generate-matcher expr pat)
         (define (ill-formed-match-pattern-violation)
           (syntax-violation who "ill-formed match pattern" stx pat))
 
         (syntax-case pat (-> unquote)
           [,[f -> y ...]           ; Named cata-pattern
            (for-all identifier? #'(y ...))
-           (gen-cata-matcher #'f expr #'(y ...))]
+           (generate-cata-matcher #'f expr #'(y ...))]
           [,[y ...]                ; Anonymous cata-pattern
            (for-all identifier? #'(y ...))
-           (gen-cata-matcher #'match-loop expr #'(y ...))]
+           (generate-cata-matcher #'match-loop expr #'(y ...))]
           [(pat1 ell pat2 ... . ,var)  ; Match this explicitly to
            (ellipsis? #'ell)           ; matching 'unquote'.
-           (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #',var)]
+           (generate-ellipsis-matcher expr #'pat1 #'(pat2 ...) #',var)]
           [(pat1 ell pat2 ... . pat3)
            (ellipsis? #'ell)
-           (gen-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
+           (generate-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
           [,u (underscore? #'u)     ; underscore is wild
            (values invoke '() '())] ; no bindings
           [,x
            (identifier? #'x)
-           (gen-variable-matcher expr #'x)]
-          [(pat1 . pat2) (gen-pair-matcher expr #'pat1 #'pat2)]
+           (generate-variable-matcher expr #'x)]
+          [(pat1 . pat2) (generate-pair-matcher expr #'pat1 #'pat2)]
           [unquote
            (ill-formed-match-pattern-violation)]
-          [_ (gen-constant-matcher expr pat)]))
+          [_ (generate-constant-matcher expr pat)]))
 
-      (define (gen-cata-matcher cata-op expr ids)
+      (define (generate-cata-matcher cata-op expr ids)
         (with-syntax ([(x) (generate-temporaries '(x))])
           (values
            invoke
@@ -159,14 +159,14 @@
            (list (make-cata-binding cata-op ids #'x)))))
 
       ;;; Match expr by binding a pattern variable named *id* to it.
-      (define (gen-variable-matcher expr id)
+      (define (generate-variable-matcher expr id)
         (values
          invoke
          (list (make-pattern-variable id expr 0))
          '()))
 
       ;;; Match expr against the constant obj.
-      (define (gen-constant-matcher expr obj)
+      (define (generate-constant-matcher expr obj)
         (values
          (lambda (succeed)
            #`(if (equal? #,expr '#,obj)
@@ -177,12 +177,12 @@
 
       ;;; Match the head of expr with car-pat and its tail with
       ;;; cdr-pat.
-      (define (gen-pair-matcher expr car-pat cdr-pat)
+      (define (generate-pair-matcher expr car-pat cdr-pat)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           (let*-values ([(mat1 pvars1 catas1)
-                         (gen-matcher #'e1 car-pat)]
+                         (generate-matcher #'e1 car-pat)]
                         [(mat2 pvars2 catas2)
-                         (gen-matcher #'e2 cdr-pat)])
+                         (generate-matcher #'e2 cdr-pat)])
             (values
              (lambda (succeed)
                #`(if (pair? #,expr)
@@ -192,13 +192,13 @@
                      (fail)))
              (append pvars1 pvars2) (append catas1 catas2)))))
 
-      (define (gen-ellipsis-matcher expr head-pat body-pats tail-pat)
+      (define (generate-ellipsis-matcher expr head-pat body-pats tail-pat)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
           (let*-values ([(mat1 pvars1 catas1)
-                         (gen-map #'e1 head-pat)]
+                         (generate-map #'e1 head-pat)]
                         [(rest-pat*) (append body-pats tail-pat)]
                         [(mat2 pvars2 catas2)
-                         (gen-matcher* #'e2 rest-pat*)])
+                         (generate-matcher* #'e2 rest-pat*)])
             (values
              (lambda (succeed)
                #`(split-right/continuations
@@ -211,7 +211,7 @@
              (append catas1 catas2)))))
 
       ;;; Match the empty list.
-      (define (gen-null-matcher expr)
+      (define (generate-null-matcher expr)
         (values (lambda (succeed)
                   #`(if (null? #,expr)
                         #,(succeed)
@@ -220,16 +220,16 @@
                 '()))
 
       ;;; Match expr recursively against the list pattern pat*.
-      (define (gen-matcher* expr pat*)
+      (define (generate-matcher* expr pat*)
         (syntax-case pat* (unquote)
-          [() (gen-null-matcher expr)]
-          [,x (gen-matcher expr pat*)]
+          [() (generate-null-matcher expr)]
+          [,x (generate-matcher expr pat*)]
           [(pat . pat*)
            (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
              (let*-values ([(mat1 pvars1 catas1)
-                            (gen-matcher #'e1 #'pat)]
+                            (generate-matcher #'e1 #'pat)]
                            [(mat2 pvars2 catas2)
-                            (gen-matcher* #'e2 #'pat*)]) ; recur
+                            (generate-matcher* #'e2 #'pat*)]) ; recur
                (values
                 (lambda (succeed)
                   #`(let ([e1 (car #,expr)]
@@ -239,11 +239,11 @@
                            (mat2 succeed)))))
                 (append pvars1 pvars2)
                 (append catas1 catas2))))]
-          [_ (gen-matcher expr pat*)]))
+          [_ (generate-matcher expr pat*)]))
 
-      (define (gen-map expr pat)
+      (define (generate-map expr pat)
         (with-syntax ([(e1 e2 f) (generate-temporaries '(e1 e2 f))])
-          (let-values ([(mat ipvars catas) (gen-matcher #'e1 pat)])
+          (let-values ([(mat ipvars catas) (generate-matcher #'e1 pat)])
             (with-syntax ([(u ...) (generate-temporaries ipvars)]
                           [(v ...)
                            (map pattern-variable-expression ipvars)])
@@ -271,8 +271,8 @@
              expr-ids
              pvars))
 
-      (define (gen-map-values proc-expr y* e n)
-        (let gen-loop ([n n])
+      (define (generate-map-values proc-expr y* e n)
+        (let generate-loop ([n n])
           (if (zero? n)
               #`(#,proc-expr #,e)
               (with-syntax ([(tmps ...) (generate-temporaries y*)]
@@ -285,13 +285,13 @@
                         (let ([e (car e*)]
                               [e* (cdr e*)])
                           (let-values ([(tmp ...)
-                                        #,(gen-loop (- n 1))])
+                                        #,(generate-loop (- n 1))])
                             (loop e* (cons tmp tmps) ...)))))))))
 
-      (define (gen-clause k cl)
+      (define (generate-clause k cl)
         (let*-values ([(pat guard-expr body) (parse-clause cl)]
                       [(matcher pvars catas)
-                       (gen-matcher #'expr-val pat)])
+                       (generate-matcher #'expr-val pat)])
           (check-pattern-variables pvars)
           (check-cata-bindings catas)
           (with-syntax ([quasiquote (datum->syntax k 'quasiquote)]
@@ -328,16 +328,16 @@
                   pvars))
 
         (map (lambda (tmp y* z)
-               (gen-map-values tmp y* z (bind-id-level z)))
+               (generate-map-values tmp y* z (bind-id-level z)))
              tmps
              val-ids
              bind-ids))
 
-      (define (gen-match k cl*)
+      (define (generate-match k cl*)
         (fold-right
          (lambda (cl rest)
            #`(let ([fail (lambda () #,rest)])
-               #,(gen-clause k cl)))
+               #,(generate-clause k cl)))
          #'(assertion-violation 'who "value does not match" expr-val)
          cl*))
 
@@ -348,6 +348,6 @@
       (syntax-case stx ()
         [(k expr cl ...)
          #`(let match-loop ([expr-val expr])
-             #,(gen-match #'k #'(cl ...)))])))
+             #,(generate-match #'k #'(cl ...)))])))
 
   )
