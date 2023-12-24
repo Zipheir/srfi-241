@@ -141,17 +141,25 @@
           ;; tail pattern.
           [(head ellipsis body ... . ,x)
            (ellipsis? #'ellipsis)
-           (generate-ellipsis-matcher expression #'head #'(body ...) #',x)]
+           (generate-ellipsis-matcher expression
+                                      #'head
+                                      #'(body ...)
+                                      #',x)]
           [(head ellipsis body ... . tail)
            (ellipsis? #'ellipsis)
-           (generate-ellipsis-matcher expression #'head #'(body ...) #'tail)]
+           (generate-ellipsis-matcher expression
+                                      #'head
+                                      #'(body ...)
+                                      #'tail)]
           [,underscore (underscore? #'underscore)  ; underscore is wild
            (values invoke '() '())]                ; no bindings
           [,x
            (identifier? #'x)
            (generate-variable-matcher expression #'x)]
           [(car-pattern . cdr-pattern)
-           (generate-pair-matcher expression #'car-pattern #'cdr-pattern)]
+           (generate-pair-matcher expression
+                                  #'car-pattern
+                                  #'cdr-pattern)]
           [unquote
            (ill-formed-match-pattern-violation)]
           [_ (generate-constant-matcher expression pattern)]))
