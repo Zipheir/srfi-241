@@ -126,32 +126,35 @@
           [_
            (syntax-violation who "ill-formed match clause" stx clause)]))
 
-      (define (generate-matcher expr pat)
+      (define (generate-matcher expression pattern)
         (define (ill-formed-match-pattern-violation)
-          (syntax-violation who "ill-formed match pattern" stx pat))
+          (syntax-violation who "ill-formed match pattern" stx pattern))
 
-        (syntax-case pat (-> unquote)
-          [,[f -> y ...]           ; Named cata-pattern
+        (syntax-case pattern (-> unquote)
+          [,[cata-operator -> y ...]           ; Named cata-pattern
            (for-all identifier? #'(y ...))
-           (generate-cata-matcher #'f expr #'(y ...))]
+           (generate-cata-matcher #'cata-operator expression #'(y ...))]
           [,[y ...]                ; Anonymous cata-pattern
            (for-all identifier? #'(y ...))
-           (generate-cata-matcher #'match-loop expr #'(y ...))]
-          [(pat1 ell pat2 ... . ,var)  ; Match this explicitly to
-           (ellipsis? #'ell)           ; matching 'unquote'.
-           (generate-ellipsis-matcher expr #'pat1 #'(pat2 ...) #',var)]
-          [(pat1 ell pat2 ... . pat3)
-           (ellipsis? #'ell)
-           (generate-ellipsis-matcher expr #'pat1 #'(pat2 ...) #'pat3)]
-          [,u (underscore? #'u)     ; underscore is wild
-           (values invoke '() '())] ; no bindings
+           (generate-cata-matcher #'match-loop expression #'(y ...))]
+          ;; Match this explicitly to avoid matching 'unquote' in a
+          ;; tail pattern.
+          [(head ellipsis body ... . ,x)
+           (ellipsis? #'ellipsis)
+           (generate-ellipsis-matcher expression #'head #'(body ...) #',x)]
+          [(head ellipsis body ... . tail)
+           (ellipsis? #'ellipsis)
+           (generate-ellipsis-matcher expression #'head #'(body ...) #'tail)]
+          [,underscore (underscore? #'underscore)  ; underscore is wild
+           (values invoke '() '())]                ; no bindings
           [,x
            (identifier? #'x)
-           (generate-variable-matcher expr #'x)]
-          [(pat1 . pat2) (generate-pair-matcher expr #'pat1 #'pat2)]
+           (generate-variable-matcher expression #'x)]
+          [(car-pattern . cdr-pattern)
+           (generate-pair-matcher expression #'car-pattern #'cdr-pattern)]
           [unquote
            (ill-formed-match-pattern-violation)]
-          [_ (generate-constant-matcher expr pat)]))
+          [_ (generate-constant-matcher expression pattern)]))
 
       (define (generate-cata-matcher cata-op expr ids)
         (with-syntax ([(x) (generate-temporaries '(x))])
