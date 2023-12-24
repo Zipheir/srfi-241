@@ -140,7 +140,7 @@
           ;; Match this explicitly to avoid matching 'unquote' in a
           ;; tail pattern.
           [(head ellipsis body ... . ,x)
-           (ellipsis? #'ellipsis)
+           (and (ellipsis? #'ellipsis) (identifier? #'x))
            (generate-ellipsis-matcher expression
                                       #'head
                                       #'(body ...)
