@@ -279,24 +279,24 @@
       ;; meta-variables (pattern variables with level > 1) to hold
       ;; the lists of values matched by *pattern's* variables.
       (define (generate-glob-matcher expression pattern)
-        (with-syntax ([(head rest loop)
-                       (generate-temporaries '(head rest loop))])
+        (with-syntax ([(e es loop)
+                       (generate-temporaries '(e es loop))])
           (let-values ([(mat ipvars catas)
-                        (generate-matcher #'head pattern)])
+                        (generate-matcher #'e pattern)])
             (with-syntax ([(a ...)   ; ids for value accumulators
                            (generate-temporaries ipvars)]
                           [(ve ...)
                            (map pattern-variable-expression ipvars)])
               (values
                (lambda (succeed)
-                 #`(let loop ([rest (reverse #,expression)]
+                 #`(let loop ([es (reverse #,expression)]
                               [a '()] ...)
-                     (if (null? rest)
+                     (if (null? es)
                          #,(succeed)
-                         (let ([head (car rest)])
+                         (let ([e (car es)])
                            #,(mat
                               (lambda ()
-                                #`(loop (cdr rest)
+                                #`(loop (cdr es)
                                         (cons ve a) ...)))))))
                (make-meta-variables #'(a ...) ipvars)
                catas)))))
