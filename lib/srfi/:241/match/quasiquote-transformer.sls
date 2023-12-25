@@ -39,19 +39,19 @@
     (define (quasiquote-syntax-violation subform msg)
       (syntax-violation 'quasiquote msg stx subform))
 
-    (define (gen-output k tmpl lvl ell?)
+    (define (generate-output keyword template level ellipsis?)
       (define (quasiquote? x)
-        (and (identifier? x) (free-identifier=? x k)))
+        (and (identifier? x) (free-identifier=? x keyword)))
 
-      (define (gen-ellipsis tmpl* out* vars* depth tmpl2)
+      (define (generate-ellipsis tmpl* out* vars* depth tmpl2)
         (let loop ([depth depth] [tmpl2 tmpl2])
           (syntax-case tmpl2 ()
             [(ell . tmpl2)
-             (ell? #'ell)
+             (ellipsis? #'ell)
              (loop (+ depth 1) #'tmpl2)]
             [tmpl2
              (let-values ([(out2 vars2)
-                           (gen-output k #'tmpl2 0 ell?)])
+                           (generate-output keyword #'tmpl2 0 ellipsis?)])
                (for-each
                 (lambda (tmpl vars)
                   (when (null? vars)
@@ -72,22 +72,22 @@
                                    #,out2)
                          (append (apply append vars*) vars2))))])))
 
-          (define (gen-unquote* expr*)
+          (define (generate-unquote* expr*)
             (with-syntax ([(tmp* ...) (generate-temporaries expr*)])
               (values #'(tmp* ...)
                       (map (lambda (tmp expr)
                              (list (make-template-variable tmp expr)))
                            #'(tmp* ...) expr*))))
 
-          (syntax-case tmpl (unquote unquote-splicing) ;qq is K.
+          (syntax-case template (unquote unquote-splicing) ;qq is K.
             ;; (<ellipsis> <template>)
             [(ell tmpl)
-             (ell? #'ell)
-             (gen-output k #'tmpl lvl (lambda (x) #f))]
+             (ellipsis? #'ell)
+             (generate-output keyword #'tmpl level (lambda (x) #f))]
             ;; (quasiquote <template>)
             [`tmpl
              (quasiquote? #'quasiquote)
-             (let-values ([(out vars) (gen-output k #'tmpl (+ lvl 1) ell?)])
+             (let-values ([(out vars) (generate-output keyword #'tmpl (+ level 1) ellipsis?)])
                (if (null? vars)
                    (values #'`tmpl
                            '())
@@ -95,37 +95,37 @@
                            vars)))]
             ;; (unquote <template>)
             [,expr
-             (zero? lvl)
+             (zero? level)
              (with-syntax ([(tmp) (generate-temporaries '(tmp))])
                (values #'tmp (list (make-template-variable #'tmp #'expr))))]
             [,tmpl
              (let-values ([(out vars)
-                           (gen-output k #'tmpl (- lvl 1) ell?)])
+                           (generate-output keyword #'tmpl (- level 1) ellipsis?)])
                (if (null? vars)
                    (values #'',tmpl '())
                    (values #`(list 'unquote #,out) vars)))]
             ;; ((unquote-splicing <template> ...) <ellipsis> . <template>)
             [((unquote-splicing expr ...) ell . tmpl2)
-             (and (zero? lvl) (ell? #'ell))
+             (and (zero? level) (ellipsis? #'ell))
              (let-values ([(out* vars*)
-                           (gen-unquote* #'(expr ...))])
-               (gen-ellipsis #'(expr ...) out* vars* 1 #'tmpl2))]
+                           (generate-unquote* #'(expr ...))])
+               (generate-ellipsis #'(expr ...) out* vars* 1 #'tmpl2))]
             ;; (<template> <ellipsis> . <template>)
             [((unquote expr ...) ell . tmpl2)
-             (and (zero? lvl) (ell? #'ell))
+             (and (zero? level) (ellipsis? #'ell))
              (let-values ([(out* vars*)
-                           (gen-unquote* #'(expr ...))])
-               (gen-ellipsis #'(expr ...) out* vars* 0 #'tmpl2))]
+                           (generate-unquote* #'(expr ...))])
+               (generate-ellipsis #'(expr ...) out* vars* 0 #'tmpl2))]
             [(tmpl1 ell . tmpl2)
-             (and (zero? lvl) (ell? #'ell))
+             (and (zero? level) (ellipsis? #'ell))
              (let-values ([(out1 vars1)
-                           (gen-output k #'tmpl1 0 ell?)])
-               (gen-ellipsis #'(tmpl1) (list out1) (list vars1) 0 #'tmpl2))]
+                           (generate-output keyword #'tmpl1 0 ellipsis?)])
+               (generate-ellipsis #'(tmpl1) (list out1) (list vars1) 0 #'tmpl2))]
             ;; ((unquote <template> ...) . <template>)
             [((unquote tmpl1 ...) . tmpl2)
              (let-values ([(out vars)
-                           (gen-output k #'tmpl2 lvl ell?)])
-               (if (zero? lvl)
+                           (generate-output keyword #'tmpl2 level ellipsis?)])
+               (if (zero? level)
                    (with-syntax ([(tmp ...)
                                   (generate-temporaries #'(tmpl1 ...))])
                      (values #`(cons* tmp ... #,out)
@@ -133,7 +133,7 @@
                               (map make-template-variable #'(tmp ...) #'(tmpl1 ...))
                               vars)))
                    (let-values ([(out* vars*)
-                                 (gen-output* k #'(tmpl1 ...) (- lvl 1) ell?)])
+                                 (generate-output* keyword #'(tmpl1 ...) (- level 1) ellipsis?)])
                      (if (and (null? vars)
                               (null? vars*))
                          (values #''((unquote-splicing tmpl1 ...) . tmpl2)
@@ -143,10 +143,10 @@
 
             ;; ((unquote-splicing <template> ...) . <template>)
             [((unquote-splicing tmpl1 ...) . tmpl2)
-             ;; TODO: Use gen-ellipsis.
+             ;; TODO: Use generate-ellipsis.
              (let-values ([(out vars)
-                           (gen-output k #'tmpl2 lvl ell?)])
-               (if (zero? lvl)
+                           (generate-output keyword #'tmpl2 level ellipsis?)])
+               (if (zero? level)
                    (with-syntax ([(tmp ...)
                                   (generate-temporaries #'(tmpl1 ...))])
                      (values #`(append tmp ... #,out)
@@ -154,7 +154,7 @@
                               (map make-template-variable #'(tmp ...) #'(tmpl1 ...))
                               vars)))
                    (let-values ([(out* vars*)
-                                 (gen-output* k #'(tmpl1 ...) (- lvl 1) ell?)])
+                                 (generate-output* keyword #'(tmpl1 ...) (- level 1) ellipsis?)])
                      (if (and (null? vars)
                               (null? vars*))
                          (values #''((unquote-splicing tmpl1 ...) . tmpl2)
@@ -164,9 +164,9 @@
             ;; (<element> . <element>)
             [(el1 . el2)
              (let-values ([(out1 vars1)
-                           (gen-output k #'el1 lvl ell?)]
+                           (generate-output keyword #'el1 level ellipsis?)]
                           [(out2 vars2)
-                           (gen-output k #'el2 lvl ell?)])
+                           (generate-output keyword #'el2 level ellipsis?)])
                (if (and (null? vars1)
                         (null? vars2))
                    (values #''(el1 . el2)
@@ -176,7 +176,7 @@
             ;; #(<element> ...)
             [#(el ...)
              (let-values ([(out vars)
-                           (gen-output k #'(el ...) lvl ell?)])
+                           (generate-output keyword #'(el ...) level ellipsis?)])
                (if (null? vars)
                    (values #'#(el ...) '())
                    (values #`(list->vector #,out) vars)))]
@@ -184,19 +184,19 @@
             [constant
              (values #''constant '())]))
 
-      (define (gen-output* k tmpl* lvl ell?)
-        (let loop ([tmpl* tmpl*] [out* '()] [vars* '()])
+      (define (generate-output* keyword template* level ellipsis?)
+        (let loop ([tmpl* template*] [out* '()] [vars* '()])
           (if (null? tmpl*)
               (values (reverse out*) vars*)
               (let ([tmpl (car tmpl*)]
                     [tmpl* (cdr tmpl*)])
-                (let-values ([(out vars) (gen-output k tmpl lvl ell?)])
+                (let-values ([(out vars) (generate-output keyword tmpl level ellipsis?)])
                   (loop tmpl* (cons out out*) (append vars vars*)))))))
 
       (syntax-case stx ()
         [(k tmpl)
          (let-values ([(out vars)
-                       (gen-output #'k #'tmpl 0 ellipsis?)])
+                       (generate-output #'k #'tmpl 0 ellipsis?)])
            (with-syntax ([(x ...) (map template-variable-identifier vars)]
                          [(e ...) (map template-variable-expression vars)])
              #`(let ([x e] ...)
