@@ -36,15 +36,15 @@
       (syntax-violation '-> "invalid use of auxiliary syntax" form)))
 
   ;;; Split the (im)proper list obj into a head and tail, where the
-  ;;; tail is of cons-length k. Pass these values to succ, or call
+  ;;; tail is of cons-length k. Pass these values to succeed, or call
   ;;; fail with no arguments if k is out of range.
-  (define (split-right/continuations obj k succ fail)
+  (define (split-right/continuations obj k succeed fail)
     (let ([n (length+ obj)])
       (if (and n (<= k n))
           (call-with-values
               (lambda ()
                 (split-at obj (- n k)))
-            succ)
+            succeed)
           (fail))))
 
   (define-syntax match
@@ -59,7 +59,7 @@
       ;; each match clause.
       (define fail-clause (make-parameter #f))
 
-      (define (invoke success) (success))
+      (define (invoke f) (f))
 
       (define-record-type pattern-variable
         (nongenerative) (sealed #t) (opaque #t)
@@ -197,9 +197,9 @@
       ;;; Match expr against the constant object.
       (define (generate-constant-matcher expression object)
         (values
-         (lambda (succeed)
+         (lambda (generate-more)
            #`(if (equal? #,expression '#,object)
-                 #,(succeed)
+                 #,(generate-more)
                  (#,(fail-clause))))
          '()
          '()))
@@ -213,11 +213,11 @@
                         [(mat2 pvars2 catas2)
                          (generate-matcher #'e2 cdr-pattern)])
             (values
-             (lambda (succeed)
+             (lambda (generate-more)
                #`(if (pair? #,expr)
                      (let ([e1 (car #,expr)]
                            [e2 (cdr #,expr)])
-                       #,(mat1 (lambda () (mat2 succeed))))
+                       #,(mat1 (lambda () (mat2 generate-more))))
                      (#,(fail-clause))))
              (append pvars1 pvars2) (append catas1 catas2)))))
 
@@ -233,21 +233,21 @@
                         [(mat2 pvars2 catas2)
                          (generate-list-matcher #'e2 rest-patterns)])
             (values
-             (lambda (succeed)
+             (lambda (generate-more)
                #`(split-right/continuations
                   #,expression
                   #,(length body-patterns)
                   (lambda (e1 e2)
-                    #,(mat1 (lambda () (mat2 succeed))))
+                    #,(mat1 (lambda () (mat2 generate-more))))
                   #,(fail-clause)))
              (append pvars1 pvars2)
              (append catas1 catas2)))))
 
       ;;; Match the empty list.
       (define (generate-null-matcher expression)
-        (values (lambda (succeed)
+        (values (lambda (generate-more)
                   #`(if (null? #,expression)
-                        #,(succeed)
+                        #,(generate-more)
                         (#,(fail-clause))))
                 '()
                 '()))
@@ -265,12 +265,12 @@
                             (generate-list-matcher #'e2  ; recur
                                                    #'rest-patterns)])
                (values
-                (lambda (succeed)
+                (lambda (generate-more)
                   #`(let ([e1 (car #,expression)]
                           [e2 (cdr #,expression)])
                       #,(mat1
                          (lambda ()
-                           (mat2 succeed)))))
+                           (mat2 generate-more)))))
                 (append pvars1 pvars2)
                 (append catas1 catas2))))]
           [_ (generate-matcher expression patterns)]))
@@ -288,11 +288,11 @@
                           [(ve ...)
                            (map pattern-variable-expression ipvars)])
               (values
-               (lambda (succeed)
+               (lambda (generate-more)
                  #`(let loop ([es (reverse #,expression)]
                               [a '()] ...)
                      (if (null? es)
-                         #,(succeed)
+                         #,(generate-more)
                          (let ([e (car es)])
                            #,(mat
                               (lambda ()
