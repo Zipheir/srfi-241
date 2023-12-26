@@ -59,8 +59,6 @@
       ;; each match clause.
       (define fail-clause (make-parameter #f))
 
-      (define (invoke f) (f))
-
       (define-record-type pattern-variable
         (nongenerative) (sealed #t) (opaque #t)
         (fields identifier  ; Name
@@ -72,13 +70,6 @@
         (fields procedure-expression ; Catamorphism operator
                 value-identifiers    ; Identifiers binding cata values
                 meta-identifier))    ; Name of meta pattern-variable
-
-      (define (identifier-hash id)
-        (assert (identifier? id))
-        (symbol-hash (syntax->datum id)))
-
-      (define (make-identifier-hashtable)
-        (make-hashtable identifier-hash bound-identifier=?))
 
       (define (repeated-pvar-error id)
         (syntax-violation who
