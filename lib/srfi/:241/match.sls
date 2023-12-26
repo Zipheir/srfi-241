@@ -334,6 +334,7 @@
                                         #,(generate-loop (- level 1))])
                             (loop e* (cons tmp tmps) ...)))))))))
 
+      ;;; Parses and translates a matcher clause.
       (define (generate-clause keyword expression-id clause)
         (let*-values ([(pattern guard-expression body)
                        (parse-clause clause)]
@@ -359,19 +360,24 @@
                                                      #'(z ...))])
               (matcher
                (lambda ()
-                 #`(let ([x u] ...)
+                 #`(let ([x u] ...)  ; bind all pattern variables
                      (if #,guard-expression
-                         (let ([tmp f] ...)
+                         (let ([tmp f] ...)  ; bind cata operators?
+                           ;; Bind cata variables to generated values
                            (let-values ([(y ...) e] ...)
                              (let-syntax ([quasiquote
                                            quasiquote-transformer])
                                #,@body)))
                          (#,(fail-clause))))))))))
 
+      ;;; Emits code to bind cata meta-variables to their
+      ;;; recursively-generated values. The actual cata-variable
+      ;;; identifiers will later be bound to these values directly.
       (define (make-cata-values variables
                                 temporaries
                                 value-ids
                                 meta-ids)
+        ;; Returns the level of the pattern variable named *id*.
         (define (meta-id-level id)
           (exists (lambda (v)
                     (let ([x (pattern-variable-identifier v)])
@@ -385,6 +391,11 @@
              value-ids
              meta-ids))
 
+      ;;; Fold the match clauses, emitting their code "from the
+      ;;; inside out". At each step, the *fail-clause* parameter
+      ;;; is bound to a continuation that aborts the current match
+      ;;; and proceeds to the rest of the clauses. The final failure
+      ;;; continuation raises an exception.
       (define (generate-match keyword expression-id clauses)
         (fold-right
          (lambda (clause rest)
