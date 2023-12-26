@@ -23,7 +23,8 @@
 ;; SOFTWARE.
 
 (library (srfi :241 match helpers)
-  (export make-identifier-hashtable invoke ellipsis? underscore? length+ split-at)
+  (export make-identifier-hashtable invoke ellipsis? underscore? length+
+          split-at)
   (import (rnrs))
 
   (define (identifier-hash id)
