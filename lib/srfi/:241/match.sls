@@ -152,8 +152,8 @@
           [,[y ...]                ; Anonymous cata-pattern
            (for-all identifier? #'(y ...))
            (generate-cata-matcher (match-loop-id) expression #'(y ...))]
-          ;; Match this explicitly to avoid matching 'unquote' in a
-          ;; tail pattern.
+          ;; Match a pattern with a variable at the tail in order to
+          ;; avoid misparsing '... . (unquote x)' as '... unquote x'.
           [(head ellipsis body ... . ,x)
            (and (ellipsis? #'ellipsis) (identifier? #'x))
            (generate-ellipsis-matcher expression
