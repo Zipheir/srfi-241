@@ -136,14 +136,17 @@
                           form
                           pattern))
 
-      ;;; Translates a pattern and input expression and returns three
-      ;;; values: a matcher-generator, a list of *patterns*'s pattern
-      ;;; variables, and its list of cata-bindings.
+      ;;; The following procedures emit the matcher code by chaining
+      ;;; matcher-generators.
       ;;;
       ;;; A matcher-generator is a procedure of one argument. When
       ;;; invoked on a continuation, it produces matching code for its
       ;;; pattern and calls its argument to produce the rest of the
       ;;; matcher.
+
+      ;;; Translates a pattern and input expression and returns three
+      ;;; values: a matcher-generator, a list of *patterns*'s pattern
+      ;;; variables, and its list of cata-bindings.
       (define (generate-matcher expression pattern)
         (syntax-case pattern (-> unquote)
           [,[cata-operator -> y ...]           ; Named cata-pattern
