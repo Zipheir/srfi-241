@@ -51,12 +51,12 @@
     (lambda (form)
       (define who 'match)
 
-      ;; Holds the identifier denoting the matcher's main loop.
-      ;; Used by anonymous cata matchers.
+      ;;; Holds the identifier denoting the matcher's main loop.
+      ;;; Used by anonymous cata matchers.
       (define match-loop-id (make-parameter #f))
 
-      ;; Holds the identifier denoting the failure continuation for
-      ;; each match clause.
+      ;;; Holds the identifier denoting the failure continuation for
+      ;;; each match clause.
       (define fail-clause (make-parameter #f))
 
       (define-record-type pattern-variable
@@ -136,14 +136,14 @@
                           form
                           pattern))
 
-      ;; Translates a pattern and input expression and returns three
-      ;; values: a matcher-generator, a list of *patterns*'s pattern
-      ;; variables, and its list of cata-bindings.
-      ;;
-      ;; A matcher-generator is a procedure of one argument. When
-      ;; invoked on a continuation, it produces matching code for its
-      ;; pattern and calls its argument to produce the rest of the
-      ;; matcher.
+      ;;; Translates a pattern and input expression and returns three
+      ;;; values: a matcher-generator, a list of *patterns*'s pattern
+      ;;; variables, and its list of cata-bindings.
+      ;;;
+      ;;; A matcher-generator is a procedure of one argument. When
+      ;;; invoked on a continuation, it produces matching code for its
+      ;;; pattern and calls its argument to produce the rest of the
+      ;;; matcher.
       (define (generate-matcher expression pattern)
         (syntax-case pattern (-> unquote)
           [,[cata-operator -> y ...]           ; Named cata-pattern
@@ -274,9 +274,9 @@
                 (append catas1 catas2))))]
           [_ (generate-matcher expression patterns)]))
 
-      ;; Build a matcher for an ellipsized pattern. This generates
-      ;; meta-variables (pattern variables with level > 1) to hold
-      ;; the lists of values matched by *pattern's* variables.
+      ;;; Build a matcher for an ellipsized pattern. This generates
+      ;;; meta-variables (pattern variables with level > 1) to hold
+      ;;; the lists of values matched by *pattern's* variables.
       (define (generate-glob-matcher expression pattern)
         (with-syntax ([(e es loop)
                        (generate-temporaries '(e es loop))])
