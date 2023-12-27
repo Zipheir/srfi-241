@@ -63,7 +63,7 @@
         (nongenerative) (sealed #t) (opaque #t)
         (fields identifier  ; Name
                 expression  ; Bound expression
-                level))     ; Variable level
+                level))     ; Ellipsis level
 
       (define-record-type cata-binding
         (nongenerative) (sealed #t) (opaque #t)
@@ -385,7 +385,8 @@
                                 temporaries
                                 value-ids
                                 mapping-ids)
-        ;; Returns the level of the pattern variable named *id*.
+        ;; Returns the ellipsis level of the pattern variable
+        ;; named *id*.
         (define (mapping-id-level id)
           (exists (lambda (v)
                     (let ([x (pattern-variable-identifier v)])
