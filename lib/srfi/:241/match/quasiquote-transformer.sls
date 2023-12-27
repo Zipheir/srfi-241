@@ -85,7 +85,7 @@
              (ellipsis? #'ell)
              (generate-output keyword #'tmpl level (lambda (x) #f))]
             ;; (quasiquote <template>)
-            [`tmpl
+            [(quasiquote tmpl)
              (quasiquote? #'quasiquote)
              (let-values ([(out vars) (generate-output keyword #'tmpl (+ level 1) ellipsis?)])
                (if (null? vars)
