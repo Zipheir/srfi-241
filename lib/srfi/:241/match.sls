@@ -315,24 +315,31 @@
              expression-ids
              variables))
 
+      ;;; Bind cata value-ids to (lists of ...) recursively-generated
+      ;;; values, with the resulting list-depth being equal to the
+      ;;; ellipsis level of the cata variables.
+      ;;;
+      ;;; Unellipsized cata variables are simply bound to the result
+      ;;; of invoking the catamorphism operator on the bound expression.
       (define (generate-map-values operator value-ids binding level)
         (let generate-loop ([level level])
           (if (zero? level)
               #`(#,operator #,binding)
-              ;; FIXME: Better names.
-              (with-syntax ([(tmps ...)
+              ;; The cata variables are ellipsized, so we have to bind
+              ;; them to lists of results.
+              (with-syntax ([(vs ...)  ; value accumulators
                              (generate-temporaries value-ids)]
-                            [(tmp ...) (generate-temporaries value-ids)]
+                            [(v ...) (generate-temporaries value-ids)]
                             [e binding])
                 #`(let loop ([e* (reverse e)]
-                             [tmps '()] ...)
+                             [vs '()] ...)
                     (if (null? e*)
-                        (values tmps ...)
+                        (values vs ...)
                         (let ([e (car e*)]
                               [e* (cdr e*)])
-                          (let-values ([(tmp ...)
+                          (let-values ([(v ...)
                                         #,(generate-loop (- level 1))])
-                            (loop e* (cons tmp tmps) ...)))))))))
+                            (loop e* (cons v vs) ...)))))))))
 
       ;;; Parses and translates a matcher clause.
       (define (generate-clause keyword expression-id clause)
