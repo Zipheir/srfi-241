@@ -81,7 +81,7 @@
                            #'(tmp* ...) expr*))))
 
           (syntax-case template (unquote unquote-splicing) ;qq is K.
-            ;; (<ellipsis> <template>)
+            ;; (<ellipsis> <template>). Escape ellipsis in template.
             [(ell tmpl)
              (ellipsis? #'ell)
              (generate-output keyword #'tmpl level (lambda (x) #f))]
