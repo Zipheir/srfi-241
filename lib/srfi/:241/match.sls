@@ -69,7 +69,8 @@
         (nongenerative) (sealed #t) (opaque #t)
         (fields procedure-expression ; Catamorphism operator
                 value-identifiers    ; Identifiers binding cata values
-                meta-identifier))    ; Name of meta pattern-variable
+                mapping-identifier)) ; Name of pattern variable which
+                                     ; maps the cata to an expression.
 
       (define (repeated-pvar-error id)
         (syntax-violation who
@@ -359,7 +360,7 @@
                         [((y ...) ...)
                          (map cata-binding-value-identifiers catas)]
                         [(z ...)
-                         (map cata-binding-meta-identifier catas)]
+                         (map cata-binding-mapping-identifier catas)]
                         [(tmp ...) (generate-temporaries catas)])
             (with-syntax ([(e ...) (make-cata-values pvars
                                                      #'(tmp ...)
@@ -377,15 +378,15 @@
                                #,@body)))
                          (#,(fail-clause))))))))))
 
-      ;;; Emits code to bind cata meta-variables to their
+      ;;; Emits code to bind cata mapping variables to their
       ;;; recursively-generated values. The actual cata-variable
       ;;; identifiers will later be bound to these values directly.
       (define (make-cata-values variables
                                 temporaries
                                 value-ids
-                                meta-ids)
+                                mapping-ids)
         ;; Returns the level of the pattern variable named *id*.
-        (define (meta-id-level id)
+        (define (mapping-id-level id)
           (exists (lambda (v)
                     (let ([x (pattern-variable-identifier v)])
                       (and (bound-identifier=? x id)
@@ -393,10 +394,10 @@
                   variables))
 
         (map (lambda (t ids b)
-               (generate-map-values t ids b (meta-id-level b)))
+               (generate-map-values t ids b (mapping-id-level b)))
              temporaries
              value-ids
-             meta-ids))
+             mapping-ids))
 
       ;;; Fold the match clauses, emitting their code "from the
       ;;; inside out". At each step, the *fail-clause* parameter
