@@ -90,12 +90,10 @@
         ;; (quasiquote <template>)
         [(quasiquote tmpl)
          (quasiquote? #'quasiquote)
-         (let-values ([(out vars) (generate-output keyword #'tmpl (+ level 1) ellipsis?)])
-           (if (null? vars)
-               (values #'`tmpl
-                       '())
-               (values #`(list 'quasiquote #,out)
-                       vars)))]
+         (generate-nested-quasiquote keyword
+                                     #'tmpl
+                                     (+ 1 level)
+                                     ellipsis?)]
         ;; (unquote <template>)
         [,expr
          (zero? level)
@@ -195,6 +193,20 @@
                     [tmpl* (cdr tmpl*)])
                 (let-values ([(out vars) (generate-output keyword tmpl level ellipsis?)])
                   (loop tmpl* (cons out out*) (append vars vars*)))))))
+
+      (define (generate-nested-quasiquote keyword
+                                          template
+                                          level
+                                          ellipsis?)
+        (let-values ([(out vars)
+                      (generate-output keyword
+                                       template
+                                       level
+                                       ellipsis?)])
+          (if (null? vars)
+              (values #`(unquote #,template) '())
+              (values #`(list 'quasiquote #,out) vars))))
+
 
       (syntax-case stx ()
         [(k tmpl)
