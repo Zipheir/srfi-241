@@ -31,6 +31,8 @@
           (srfi :241 match helpers))
 
   (define (quasiquote-transformer stx)
+    (define (never x) #f)
+
     (define who 'quasiquote)
 
     (define-record-type template-variable
@@ -84,7 +86,7 @@
         ;; (<ellipsis> <template>). Escape ellipsis in template.
         [(ell tmpl)
          (ellipsis? #'ell)
-         (generate-output keyword #'tmpl level (lambda (x) #f))]
+         (generate-output keyword #'tmpl level never)]
         ;; (quasiquote <template>)
         [(quasiquote tmpl)
          (quasiquote? #'quasiquote)
