@@ -96,16 +96,8 @@
          (quasiquote? #'quasiquote)
          (generate-nested keyword #'tmpl (+ 1 level) ellipsis?)]
         ;; (unquote <template>)
-        [,expr
-         (zero? level)
-         (with-syntax ([(tmp) (generate-temporaries '(tmp))])
-           (values #'tmp (list (make-template-variable #'tmp #'expr))))]
-        [,tmpl
-         (let-values ([(out vars)
-                       (generate-output keyword #'tmpl (- level 1) ellipsis?)])
-           (if (null? vars)
-               (values #'',tmpl '())
-               (values #`(list 'unquote #,out) vars)))]
+        [(unquote tmpl)
+         (generate-unquote keyword #'tmpl level ellipsis?)]
         ;; ((unquote-splicing <template> ...) <ellipsis> . <template>)
         [((unquote-splicing expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
@@ -209,6 +201,19 @@
               (values #`(unquote #,template) '())
               (values #`(list 'quasiquote #,out) vars))))
 
+      (define (generate-unquote keyword template level ellipsis?)
+        (if (zero? level)
+            (with-syntax ([(t) (generate-temporaries '(t))])
+              (values #'t
+                      (list (make-template-variable #'t template))))
+            (let-values ([(out vs)
+                          (generate-output keyword
+                                           template
+                                           (- level 1)
+                                           ellipsis?)])
+              (if (null? vs)
+                  (values #''(unquote template) '())
+                  (values #`(list 'unquote #,out) vs)))))
 
       (syntax-case stx ()
         [(k tmpl)
