@@ -54,7 +54,10 @@
              (loop (+ depth 1) #'tmpl2)]
             [tmpl2
              (let-values ([(out2 vars2)
-                           (generate-output keyword #'tmpl2 0 ellipsis?)])
+                           (generate-output keyword
+                                            #'tmpl2
+                                            0
+                                            ellipsis?)])
                (for-each
                 (lambda (tmpl vars)
                   (when (null? vars)
@@ -64,7 +67,8 @@
                 tmpl* vars*)
                (with-syntax ([((tmp** ...) ...)
                               (map (lambda (vars)
-                                     (map template-variable-identifier vars))
+                                     (map template-variable-identifier
+                                          vars))
                                    vars*)]
                              [(out1 ...) out*])
                  (values #`(append (append-n-map #,depth
@@ -188,7 +192,11 @@
               (values (reverse out*) vars*)
               (let ([tmpl (car tmpl*)]
                     [tmpl* (cdr tmpl*)])
-                (let-values ([(out vars) (generate-output keyword tmpl level ellipsis?)])
+                (let-values ([(out vars)
+                              (generate-output keyword
+                                               tmpl
+                                               level
+                                               ellipsis?)])
                   (loop tmpl* (cons out out*) (append vars vars*)))))))
 
       (define (generate-nested keyword template level ellipsis?)
@@ -206,8 +214,10 @@
         [(k tmpl)
          (let-values ([(out vars)
                        (generate-output #'k #'tmpl 0 ellipsis?)])
-           (with-syntax ([(x ...) (map template-variable-identifier vars)]
-                         [(e ...) (map template-variable-expression vars)])
+           (with-syntax ([(x ...)
+                          (map template-variable-identifier vars)]
+                         [(e ...)
+                          (map template-variable-expression vars)])
              #`(let ([x e] ...)
                  #,out)))]
         [_
