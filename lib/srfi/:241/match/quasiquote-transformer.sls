@@ -37,7 +37,8 @@
 
     (define-record-type template-variable
       (nongenerative) (sealed #t) (opaque #t)
-      (fields identifier expression))
+      (fields identifier   ; Name
+              expression)) ; Bound expression
 
     (define (quasiquote-syntax-violation subform msg)
       (syntax-violation 'quasiquote msg stx subform))
