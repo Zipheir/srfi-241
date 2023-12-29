@@ -94,9 +94,30 @@
       ;;   ((unquote . *expressions*) ellipsis . *more-templates*)
       (define (generate-simple-unquote-ellipsis expressions
                                                 more-templates)
-        (let-values ([(ids vss)
-                      (generate-variables expressions)])
+        (let-values ([(ids vss) (generate-variables expressions)])
           (generate-ellipsis expressions ids vss 0 more-templates)))
+
+      ;; Generate code for level-0 templates of the form
+      ;;   ((unquote-splicing . *expressions*) ellipsis .
+      ;;    *more-templates*)
+      (define (generate-simple-splicing-ellipsis expressions
+      						 more-templates)
+        (let-values ([(ids vss) (generate-variables expressions)])
+          (generate-ellipsis expressions ids vss 1 more-templates)))
+
+      ;; Generate code for level-0 templates of the form
+      ;;   ((*template* ellipsis) . *more-templates*)
+      (define (generate-simple-ellipsis template more-templates)
+        (let-values ([(out vs)
+                      (generate-output keyword
+                                       template
+                                       0
+                                       ellipsis?)])
+          (generate-ellipsis (list template)
+                             (list out)
+                             (list vs)
+                             0
+                             more-templates)))
 
       (syntax-case template (unquote unquote-splicing)
         ;; (<ellipsis> <template>). Escape ellipsis in template.
@@ -111,17 +132,13 @@
         ;; ((unquote-splicing <template> ...) <ellipsis> . <template>)
         [((unquote-splicing expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
-         (let-values ([(names varss)
-                       (generate-variables #'(expr ...))])
-           (generate-ellipsis #'(expr ...) names varss 1 #'tmpl2))]
+         (generate-simple-splicing-ellipsis #'(expr ...) #'tmpl2)]
         ;; (<template> <ellipsis> . <template>)
         [((unquote expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
          (generate-simple-unquote-ellipsis #'(expr ...) #'tmpl2)]
         [(tmpl1 ell . tmpl2) (and (zero? level) (ellipsis? #'ell))
-         (let-values ([(out1 vars1)
-                       (generate-output keyword #'tmpl1 0 ellipsis?)])
-           (generate-ellipsis #'(tmpl1) (list out1) (list vars1) 0 #'tmpl2))]
+         (generate-simple-ellipsis #'tmpl1 #'tmpl2)]
         ;; ((unquote <template> ...) . <template>)
         [((unquote tmpl1 ...) . tmpl2)
          (let-values ([(out vars)
