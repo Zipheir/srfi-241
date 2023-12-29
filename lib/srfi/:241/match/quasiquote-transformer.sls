@@ -118,6 +118,16 @@
                              (list vs)
                              0
                              more-templates)))
+
+      (define (generate-pair template more-templates)
+        (let-values
+         ([(out1 vars1)
+           (generate-output keyword template level ellipsis?)]
+          [(out2 vars2)
+           (generate-output keyword more-templates level ellipsis?)])
+          (values #`(cons #,out1 #,out2)
+                  (append vars1 vars2))))
+
       ;; Generate code for a vector literal containing the *elements*.
       (define (generate-vector elements)
         (let-values
@@ -186,17 +196,7 @@
                      (values #`(cons (list 'unquote-splicing #,@out*) #,out)
                              (append vars* vars))))))]
         ;; (<element> . <element>)
-        [(el1 . el2)
-         (let-values ([(out1 vars1)
-                       (generate-output keyword #'el1 level ellipsis?)]
-                      [(out2 vars2)
-                       (generate-output keyword #'el2 level ellipsis?)])
-           (if (and (null? vars1)
-                    (null? vars2))
-               (values #''(el1 . el2)
-                       '())
-               (values #`(cons #,out1 #,out2)
-                       (append vars1 vars2))))]
+        [(el1 . el2) (generate-pair #'el1 #'el2)]
         ;; #(<element> ...)
         [#(el ...) (generate-vector #'(el ...))]
         ;; <constant>
