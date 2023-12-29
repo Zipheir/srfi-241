@@ -192,35 +192,26 @@
           (values #`(list->vector #,out) vs)))
 
       (syntax-case template (unquote unquote-splicing)
-        ;; (<ellipsis> <template>). Escape ellipsis in template.
         [(ell tmpl) (ellipsis? #'ell)
          (generate-output keyword #'tmpl level never)]
-        ;; (quasiquote <template>)
         [(quasiquote tmpl) (quasiquote? #'quasiquote)
          (generate-nested keyword #'tmpl (+ 1 level) ellipsis?)]
-        ;; (unquote <template>)
         [(unquote tmpl)
          (generate-singleton-unquote keyword #'tmpl level ellipsis?)]
-        ;; ((unquote-splicing <template> ...) <ellipsis> . <template>)
         [((unquote-splicing expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
          (generate-simple-splicing-ellipsis #'(expr ...) #'tmpl2)]
-        ;; (<template> <ellipsis> . <template>)
         [((unquote expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
          (generate-simple-unquote-ellipsis #'(expr ...) #'tmpl2)]
         [(tmpl1 ell . tmpl2) (and (zero? level) (ellipsis? #'ell))
          (generate-simple-ellipsis #'tmpl1 #'tmpl2)]
-        ;; ((unquote <template> ...) . <template>)
         [((unquote tmpl1 ...) . tmpl2)
          (generate-unquote #'(tmpl1 ...) #'tmpl2)]
         [((unquote-splicing tmpl1 ...) . tmpl2)
          (generate-splicing #'(tmpl1 ...) #'tmpl2)]
-        ;; (<element> . <element>)
         [(el1 . el2) (generate-pair #'el1 #'el2)]
-        ;; #(<element> ...)
         [#(el ...) (generate-vector #'(el ...))]
-        ;; <constant>
         [constant (values #''constant '())]))
 
       (define (generate-output* keyword template* level ellipsis?)
