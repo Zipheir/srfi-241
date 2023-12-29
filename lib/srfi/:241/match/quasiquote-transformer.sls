@@ -41,14 +41,14 @@
               expression)) ; Bound expression
 
     ;; Make a list of template variables and bind them to
-    ;; the *expressions*. Return the variable names and singleton
-    ;; lists of the variables as multiple values.
+    ;; the *expressions*. Return the variable names & variables
+    ;; as multiple values.
     (define (generate-variables expressions)
       (with-syntax ([(tmps ...) (generate-temporaries expressions)])
         (values #'(tmps ...)
-                (map (lambda (t e)
-                       (list (make-template-variable t e)))
-                     #'(tmps ...) expressions))))
+                (map make-template-variable
+                     #'(tmps ...)
+                     expressions))))
 
     (define (quasiquote-syntax-violation subform msg)
       (syntax-violation 'quasiquote msg stx subform))
@@ -94,7 +94,8 @@
       ;;   ((unquote . *expressions*) ellipsis . *more-templates*)
       (define (generate-simple-unquote-ellipsis expressions
                                                 more-templates)
-        (let-values ([(ids vss) (generate-variables expressions)])
+        (let*-values ([(ids vs) (generate-variables expressions)]
+                      [(vss) (map list vs)])
           (generate-ellipsis expressions ids vss 0 more-templates)))
 
       ;; Generate code for level-0 templates of the form
@@ -102,7 +103,8 @@
       ;;    *more-templates*)
       (define (generate-simple-splicing-ellipsis expressions
       						 more-templates)
-        (let-values ([(ids vss) (generate-variables expressions)])
+        (let*-values ([(ids vs) (generate-variables expressions)]
+                      [(vss) (map list vs)])
           (generate-ellipsis expressions ids vss 1 more-templates)))
 
       ;; Generate code for level-0 templates of the form
@@ -124,13 +126,10 @@
          ([(out vars)
            (generate-output keyword more-templates level ellipsis?)])
           (if (zero? level)
-              (with-syntax ([(t ...)
-                             (generate-temporaries unquoted-templates)])
-                (let ([vs (map make-template-variable
-                               #'(t ...)
-                               unquoted-templates)])
-                  (values #`(cons* t ... #,out)
-                          (append vs vars))))
+              (let*-values ([(ids vs)
+                             (generate-variables unquoted-templates)])
+                  (values #`(cons* #,@ids #,out)
+                          (append vs vars)))
               (let-values
                ([(out* vars*)
                  (generate-output* keyword
@@ -152,15 +151,10 @@
          ([(out vars)
            (generate-output keyword more-templates level ellipsis?)])
           (if (zero? level)
-              ;; TODO: Abstract this process, which also happens in
-              ;; generate-unquote.
-              (with-syntax ([(t ...)
-                             (generate-temporaries unquoted-templates)])
-                (let ([vs (map make-template-variable
-                               #'(t ...)
-                               unquoted-templates)])
-                  (values #`(append t ... #,out)
-                          (append vs vars))))
+              (let-values ([(ids vs)
+                            (generate-variables unquoted-templates)])
+                  (values #`(append #,@ids #,out)
+                          (append vs vars)))
               (let-values ([(out* vars*)
                             (generate-output* keyword
                                               unquoted-templates
