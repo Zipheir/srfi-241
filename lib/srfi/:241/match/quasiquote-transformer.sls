@@ -40,6 +40,16 @@
       (fields identifier   ; Name
               expression)) ; Bound expression
 
+    ;; Make a list of template variables and bind them to
+    ;; the *expressions*. Return the variable names and singleton
+    ;; lists of the variables as multiple values.
+    (define (generate-variables expressions)
+      (with-syntax ([(tmps ...) (generate-temporaries expressions)])
+        (values #'(tmps ...)
+                (map (lambda (t e)
+                       (list (make-template-variable t e)))
+                     #'(tmps ...) expressions))))
+
     (define (quasiquote-syntax-violation subform msg)
       (syntax-violation 'quasiquote msg stx subform))
 
@@ -80,22 +90,12 @@
                                    #,out2)
                          (append (apply append vars*) vars2))))])))
 
-      ;; Make a list of template variables and bind them to
-      ;; the *expressions*. Return the variable names and singleton
-      ;; lists of the variables as multiple values.
-      (define (generate-unquote-list expressions)
-        (with-syntax ([(tmps ...) (generate-temporaries expressions)])
-          (values #'(tmps ...)
-                  (map (lambda (t e)
-                         (list (make-template-variable t e)))
-                       #'(tmps ...) expressions))))
-
       ;; Generate code for templates of the form
       ;;   ((unquote . *expressions*) ellipsis . *more-templates*)
       (define (generate-simple-unquote-ellipsis expressions
                                                 more-templates)
         (let-values ([(ids vss)
-                      (generate-unquote-list expressions)])
+                      (generate-variables expressions)])
           (generate-ellipsis expressions ids vss 0 more-templates)))
 
       (syntax-case template (unquote unquote-splicing)
@@ -112,7 +112,7 @@
         [((unquote-splicing expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
          (let-values ([(names varss)
-                       (generate-unquote-list #'(expr ...))])
+                       (generate-variables #'(expr ...))])
            (generate-ellipsis #'(expr ...) names varss 1 #'tmpl2))]
         ;; (<template> <ellipsis> . <template>)
         [((unquote expr ...) ell . tmpl2)
