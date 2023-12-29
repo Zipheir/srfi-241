@@ -79,12 +79,14 @@
                                    #,out2)
                          (append (apply append vars*) vars2))))])))
 
-      (define (generate-unquote-list expr*)
-        (with-syntax ([(tmp* ...) (generate-temporaries expr*)])
-          (values #'(tmp* ...)
-                  (map (lambda (tmp expr)
-                         (list (make-template-variable tmp expr)))
-                       #'(tmp* ...) expr*))))
+      ;; Make a list of template variables and bind them to
+      ;; the *expressions*.
+      (define (generate-unquote-list expressions)
+        (with-syntax ([(tmps ...) (generate-temporaries expressions)])
+          (values #'(tmps ...)
+                  (map (lambda (t e)
+                         (list (make-template-variable t e)))
+                       #'(tmps ...) expressions))))
 
       (syntax-case template (unquote unquote-splicing)
         ;; (<ellipsis> <template>). Escape ellipsis in template.
