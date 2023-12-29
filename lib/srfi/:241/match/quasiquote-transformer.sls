@@ -103,15 +103,15 @@
         ;; ((unquote-splicing <template> ...) <ellipsis> . <template>)
         [((unquote-splicing expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
-         (let-values ([(out* vars*)
+         (let-values ([(names varss)
                        (generate-unquote-list #'(expr ...))])
-           (generate-ellipsis #'(expr ...) out* vars* 1 #'tmpl2))]
+           (generate-ellipsis #'(expr ...) names varss 1 #'tmpl2))]
         ;; (<template> <ellipsis> . <template>)
         [((unquote expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
-         (let-values ([(out* vars*)
+         (let-values ([(names varss)
                        (generate-unquote-list #'(expr ...))])
-           (generate-ellipsis #'(expr ...) out* vars* 0 #'tmpl2))]
+           (generate-ellipsis #'(expr ...) names varss 0 #'tmpl2))]
         [(tmpl1 ell . tmpl2) (and (zero? level) (ellipsis? #'ell))
          (let-values ([(out1 vars1)
                        (generate-output keyword #'tmpl1 0 ellipsis?)])
