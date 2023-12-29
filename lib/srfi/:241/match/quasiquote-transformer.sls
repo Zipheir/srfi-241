@@ -79,7 +79,7 @@
                                    #,out2)
                          (append (apply append vars*) vars2))))])))
 
-      (define (generate-unquote* expr*)
+      (define (generate-unquote-list expr*)
         (with-syntax ([(tmp* ...) (generate-temporaries expr*)])
           (values #'(tmp* ...)
                   (map (lambda (tmp expr)
@@ -100,13 +100,13 @@
         [((unquote-splicing expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
          (let-values ([(out* vars*)
-                       (generate-unquote* #'(expr ...))])
+                       (generate-unquote-list #'(expr ...))])
            (generate-ellipsis #'(expr ...) out* vars* 1 #'tmpl2))]
         ;; (<template> <ellipsis> . <template>)
         [((unquote expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
          (let-values ([(out* vars*)
-                       (generate-unquote* #'(expr ...))])
+                       (generate-unquote-list #'(expr ...))])
            (generate-ellipsis #'(expr ...) out* vars* 0 #'tmpl2))]
         [(tmpl1 ell . tmpl2) (and (zero? level) (ellipsis? #'ell))
          (let-values ([(out1 vars1)
