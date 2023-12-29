@@ -128,7 +128,7 @@
          (generate-nested keyword #'tmpl (+ 1 level) ellipsis?)]
         ;; (unquote <template>)
         [(unquote tmpl)
-         (generate-unquote keyword #'tmpl level ellipsis?)]
+         (generate-singleton-unquote keyword #'tmpl level ellipsis?)]
         ;; ((unquote-splicing <template> ...) <ellipsis> . <template>)
         [((unquote-splicing expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
@@ -225,7 +225,10 @@
               (values #`(unquote #,template) '())
               (values #`(list 'quasiquote #,out) vars))))
 
-      (define (generate-unquote keyword template level ellipsis?)
+      (define (generate-singleton-unquote keyword
+                                          template
+                                          level
+                                          ellipsis?)
         (if (zero? level)
             (with-syntax ([(t) (generate-temporaries '(t))])
               (values #'t
