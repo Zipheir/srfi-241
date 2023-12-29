@@ -118,6 +118,12 @@
                              (list vs)
                              0
                              more-templates)))
+      ;; Generate code for a vector literal containing the *elements*.
+      (define (generate-vector elements)
+        (let-values
+         ([(out vs)
+           (generate-output keyword elements level ellipsis?)])
+          (values #`(list->vector #,out) vs)))
 
       (syntax-case template (unquote unquote-splicing)
         ;; (<ellipsis> <template>). Escape ellipsis in template.
@@ -192,12 +198,7 @@
                (values #`(cons #,out1 #,out2)
                        (append vars1 vars2))))]
         ;; #(<element> ...)
-        [#(el ...)
-         (let-values ([(out vars)
-                       (generate-output keyword #'(el ...) level ellipsis?)])
-           (if (null? vars)
-               (values #'#(el ...) '())
-               (values #`(list->vector #,out) vars)))]
+        [#(el ...) (generate-vector #'(el ...))]
         ;; <constant>
         [constant
          (values #''constant '())]))
