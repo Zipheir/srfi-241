@@ -119,6 +119,32 @@
                              0
                              more-templates)))
 
+      (define (generate-unquote unquoted-templates more-templates)
+        (let-values
+         ([(out vars)
+           (generate-output keyword more-templates level ellipsis?)])
+          (if (zero? level)
+              (with-syntax ([(t ...)
+                             (generate-temporaries unquoted-templates)])
+                (let ([vs (map make-template-variable
+                               #'(t ...)
+                               unquoted-templates)])
+                  (values #`(cons* t ... #,out)
+                          (append vs vars))))
+              (let-values
+               ([(out* vars*)
+                 (generate-output* keyword
+                                   unquoted-templates
+                                   (- level 1)
+                                   ellipsis?)])
+                (if (and (null? vars) (null? vars*))
+                    (values
+                     #`'((unquote-splicing ,@unquoted-templates) .
+                          ,more-templates)
+                     '())
+                    (values #`(cons (list 'unquote #,@out*) #,out)
+                            (append vars* vars)))))))
+
       (define (generate-pair template more-templates)
         (let-values
          ([(out1 vars1)
@@ -157,24 +183,7 @@
          (generate-simple-ellipsis #'tmpl1 #'tmpl2)]
         ;; ((unquote <template> ...) . <template>)
         [((unquote tmpl1 ...) . tmpl2)
-         (let-values ([(out vars)
-                       (generate-output keyword #'tmpl2 level ellipsis?)])
-           (if (zero? level)
-               (with-syntax ([(tmp ...)
-                              (generate-temporaries #'(tmpl1 ...))])
-                 (values #`(cons* tmp ... #,out)
-                         (append
-                          (map make-template-variable #'(tmp ...) #'(tmpl1 ...))
-                          vars)))
-               (let-values ([(out* vars*)
-                             (generate-output* keyword #'(tmpl1 ...) (- level 1) ellipsis?)])
-                 (if (and (null? vars)
-                          (null? vars*))
-                     (values #''((unquote-splicing tmpl1 ...) . tmpl2)
-                             '())
-                     (values #`(cons (list 'unquote #,@out*) #,out)
-                             (append vars* vars))))))]
-
+         (generate-unquote #'(tmpl1 ...) #'tmpl2)]
         ;; ((unquote-splicing <template> ...) . <template>)
         [((unquote-splicing tmpl1 ...) . tmpl2)
          ;; TODO: Use generate-ellipsis.
