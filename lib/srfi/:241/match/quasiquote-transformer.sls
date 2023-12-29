@@ -81,14 +81,22 @@
                          (append (apply append vars*) vars2))))])))
 
       ;; Make a list of template variables and bind them to
-      ;; the *expressions*. Return the variable names and variables
-      ;; as multiple values.
+      ;; the *expressions*. Return the variable names and singleton
+      ;; lists of the variables as multiple values.
       (define (generate-unquote-list expressions)
         (with-syntax ([(tmps ...) (generate-temporaries expressions)])
           (values #'(tmps ...)
                   (map (lambda (t e)
                          (list (make-template-variable t e)))
                        #'(tmps ...) expressions))))
+
+      ;; Generate code for templates of the form
+      ;;   ((unquote . *expressions*) ellipsis . *more-templates*)
+      (define (generate-simple-unquote-ellipsis expressions
+                                                more-templates)
+        (let-values ([(ids vss)
+                      (generate-unquote-list expressions)])
+          (generate-ellipsis expressions ids vss 0 more-templates)))
 
       (syntax-case template (unquote unquote-splicing)
         ;; (<ellipsis> <template>). Escape ellipsis in template.
@@ -109,9 +117,7 @@
         ;; (<template> <ellipsis> . <template>)
         [((unquote expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
-         (let-values ([(names varss)
-                       (generate-unquote-list #'(expr ...))])
-           (generate-ellipsis #'(expr ...) names varss 0 #'tmpl2))]
+         (generate-simple-unquote-ellipsis #'(expr ...) #'tmpl2)]
         [(tmpl1 ell . tmpl2) (and (zero? level) (ellipsis? #'ell))
          (let-values ([(out1 vars1)
                        (generate-output keyword #'tmpl1 0 ellipsis?)])
@@ -215,6 +221,7 @@
               (if (null? vs)
                   (values #''(unquote template) '())
                   (values #`(list 'unquote #,out) vs)))))
+
 
       (syntax-case stx ()
         [(k tmpl)
