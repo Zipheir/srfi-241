@@ -80,7 +80,8 @@
                          (append (apply append vars*) vars2))))])))
 
       ;; Make a list of template variables and bind them to
-      ;; the *expressions*.
+      ;; the *expressions*. Return the variable names and variables
+      ;; as multiple values.
       (define (generate-unquote-list expressions)
         (with-syntax ([(tmps ...) (generate-temporaries expressions)])
           (values #'(tmps ...)
