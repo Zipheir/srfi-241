@@ -86,7 +86,7 @@
                          (list (make-template-variable tmp expr)))
                        #'(tmp* ...) expr*))))
 
-      (syntax-case template (unquote unquote-splicing) ;qq is K.
+      (syntax-case template (unquote unquote-splicing)
         ;; (<ellipsis> <template>). Escape ellipsis in template.
         [(ell tmpl) (ellipsis? #'ell)
          (generate-output keyword #'tmpl level never)]
