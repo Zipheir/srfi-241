@@ -200,8 +200,7 @@
         ;; #(<element> ...)
         [#(el ...) (generate-vector #'(el ...))]
         ;; <constant>
-        [constant
-         (values #''constant '())]))
+        [constant (values #''constant '())]))
 
       (define (generate-output* keyword template* level ellipsis?)
         (let loop ([tmpl* template*] [out* '()] [vars* '()])
