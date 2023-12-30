@@ -62,6 +62,11 @@
                                  variabless
                                  depth
                                  more-templates)
+        (define identifiers
+          (map (lambda (vs)
+                 (map template-variable-identifier vs))
+               variabless))
+
         (let loop ([depth depth] [more more-templates])
           (syntax-case more ()
             [(ell . tm) (ellipsis? #'ell)
@@ -70,11 +75,7 @@
              (let-values ([(out2 vars2)
                            (generate-output keyword #'tm 0 ellipsis?)])
                (check-bindings templates variabless)
-               (with-syntax ([((id ...) ...)
-                              (map (lambda (vs)
-                                     (map template-variable-identifier
-                                          vs))
-                                   variabless)]
+               (with-syntax ([((id ...) ...) identifiers]
                              [(out1 ...) outs])
                  ;; FIXME: Cryptic.
                  (values #`(append (append-n-map #,depth
