@@ -57,38 +57,43 @@
       (define (quasiquote? x)
         (and (identifier? x) (free-identifier=? x keyword)))
 
-      (define (generate-ellipsis tmpl* out* vars* depth tmpl2)
-        (let loop ([depth depth] [tmpl2 tmpl2])
-          (syntax-case tmpl2 ()
-            [(ell . tmpl2)
-             (ellipsis? #'ell)
-             (loop (+ depth 1) #'tmpl2)]
-            [tmpl2
+      (define (generate-ellipsis templates
+                                 outs
+                                 variabless
+                                 depth
+                                 more-templates)
+        (let loop ([depth depth] [more more-templates])
+          (syntax-case more ()
+            [(ell . tm) (ellipsis? #'ell)
+             (loop (+ depth 1) #'tm)]
+            [tm
              (let-values ([(out2 vars2)
-                           (generate-output keyword
-                                            #'tmpl2
-                                            0
-                                            ellipsis?)])
-               (for-each
-                (lambda (tmpl vars)
-                  (when (null? vars)
-                    (quasiquote-syntax-violation
-                     #'tmpl
-                     "no substitutions to repeat here")))
-                tmpl* vars*)
-               (with-syntax ([((tmp** ...) ...)
-                              (map (lambda (vars)
+                           (generate-output keyword #'tm 0 ellipsis?)])
+               (check-bindings templates variabless)
+               (with-syntax ([((id ...) ...)
+                              (map (lambda (vs)
                                      (map template-variable-identifier
-                                          vars))
-                                   vars*)]
-                             [(out1 ...) out*])
+                                          vs))
+                                   variabless)]
+                             [(out1 ...) outs])
+                 ;; FIXME: Cryptic.
                  (values #`(append (append-n-map #,depth
-                                                 (lambda (tmp** ...)
+                                                 (lambda (id ...)
                                                    out1)
-                                                 tmp** ...)
+                                                 id ...)
                                    ...
                                    #,out2)
-                         (append (apply append vars*) vars2))))])))
+                         (append (apply append variabless) vars2))))])))
+
+      ;; Raise an exception for a template with an empty variable list.
+      (define (check-bindings templates variabless)
+        (for-each (lambda (t vs)
+                    (when (null? vs)
+                      (quasiquote-syntax-violation
+                       t
+                       "no substitutions to repeat here")))
+                  templates
+                  variabless))
 
       ;; Generate code for templates of the form
       ;;   ((unquote . *expressions*) ellipsis . *more-templates*)
