@@ -30,7 +30,7 @@
   (import (rnrs (6))
           (srfi :241 match helpers))
 
-  (define (quasiquote-transformer stx)
+  (define (quasiquote-transformer form)
     (define (never x) #f)
 
     (define who 'quasiquote)
@@ -51,7 +51,7 @@
                      expressions))))
 
     (define (quasiquote-syntax-violation subform msg)
-      (syntax-violation 'quasiquote msg stx subform))
+      (syntax-violation 'quasiquote msg form subform))
 
     (define (generate-output keyword template level ellipsis?)
       (define (quasiquote? x)
@@ -121,6 +121,9 @@
                              0
                              more-templates)))
 
+      ;; Generate output for
+      ;;
+      ;; ((unquote . <unquoted-templates>) . more-templates)
       (define (generate-unquote unquoted-templates more-templates)
         (let-values
          ([(out vars)
@@ -144,6 +147,7 @@
                     (values #`(cons (list 'unquote #,@out*) #,out)
                             (append vars* vars)))))))
 
+      ;; Generate output for
       ;; ((unquote-splicing <template> ...) . <template>)
       (define (generate-splicing unquoted-templates more-templates)
         ;; TODO: Use generate-ellipsis.
@@ -169,6 +173,7 @@
                      #`(cons (list 'unquote-splicing #,@out*) #,out)
                      (append vars* vars)))))))
 
+      ;; Generate output for (template . more-templates).
       (define (generate-pair template more-templates)
         (let-values
          ([(out1 vars1)
@@ -178,13 +183,14 @@
           (values #`(cons #,out1 #,out2)
                   (append vars1 vars2))))
 
-      ;; Generate code for a vector literal containing the *elements*.
+      ;; Generate output for #(elements0 ... elementsN).
       (define (generate-vector elements)
         (let-values
          ([(out vs)
            (generate-output keyword elements level ellipsis?)])
           (values #`(list->vector #,out) vs)))
 
+      ;; Body of generate-output.
       (syntax-case template (unquote unquote-splicing)
         [(ell tmpl) (ellipsis? #'ell)
          (generate-output keyword #'tmpl level never)]
@@ -248,8 +254,8 @@
                   (values #''(unquote template) '())
                   (values #`(list 'unquote #,out) vs)))))
 
-
-      (syntax-case stx ()
+      ;; Body of quasiquote-transformer.
+      (syntax-case form ()
         [(k tmpl)
          (let-values ([(out vars)
                        (generate-output #'k #'tmpl 0 ellipsis?)])
@@ -260,7 +266,7 @@
              #`(let ([x e] ...)
                  #,out)))]
         [_
-         (syntax-violation who "invalid syntax" stx)]))
+         (syntax-violation who "invalid syntax" form)]))
 
   (define (append-n-map n proc . arg*)
     (let loop ([n n] [arg* arg*])
