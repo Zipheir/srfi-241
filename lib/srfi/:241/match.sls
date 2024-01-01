@@ -61,15 +61,15 @@
 
       (define-record-type pattern-variable
         (nongenerative) (sealed #t) (opaque #t)
-        (fields identifier  ; Name
+        (fields name
                 expression  ; Bound expression
                 level))     ; Ellipsis level
 
       (define-record-type cata-binding
         (nongenerative) (sealed #t) (opaque #t)
         (fields procedure-expression ; Catamorphism operator
-                value-identifiers    ; Identifiers binding cata values
-                mapping-identifier)) ; Name of pattern variable which
+                value-names          ; Identifiers binding cata values
+                mapping-name))       ; Name of pattern variable which
                                      ; maps the cata to an expression.
 
       (define (repeated-pvar-error id)
@@ -89,7 +89,7 @@
 
         (for-each
          (lambda (v)
-           (let ([id (pattern-variable-identifier v)])
+           (let ([id (pattern-variable-name v)])
              (hashtable-update! id-table id (mark id) #f)))
          variables))
 
@@ -114,7 +114,7 @@
            (for-each
             (lambda (id)
               (hashtable-update! id-table id (mark id) #f))
-            (cata-binding-value-identifiers cata)))
+            (cata-binding-value-names cata)))
          catas))
 
       ;;; Parse a match clause and return the pattern, guard, and
@@ -310,7 +310,7 @@
       (define (make-meta-variables expression-ids variables)
         (map (lambda (id v)
                (make-pattern-variable
-                (pattern-variable-identifier v)
+                (pattern-variable-name v)
                 id
                 (+ (pattern-variable-level v) 1)))
              expression-ids
@@ -352,15 +352,15 @@
           (check-cata-bindings catas)
           (with-syntax ([quasiquote (datum->syntax keyword 'quasiquote)]
                         [(x ...)
-                         (map pattern-variable-identifier pvars)]
+                         (map pattern-variable-name pvars)]
                         [(u ...)
                          (map pattern-variable-expression pvars)]
                         [(f ...)
                          (map cata-binding-procedure-expression catas)]
                         [((y ...) ...)
-                         (map cata-binding-value-identifiers catas)]
+                         (map cata-binding-value-names catas)]
                         [(z ...)
-                         (map cata-binding-mapping-identifier catas)]
+                         (map cata-binding-mapping-name catas)]
                         [(tmp ...) (generate-temporaries catas)])
             (with-syntax ([(e ...) (make-cata-values pvars
                                                      #'(tmp ...)
@@ -389,7 +389,7 @@
         ;; named *id*.
         (define (mapping-id-level id)
           (exists (lambda (v)
-                    (let ([x (pattern-variable-identifier v)])
+                    (let ([x (pattern-variable-name v)])
                       (and (bound-identifier=? x id)
                            (pattern-variable-level v))))
                   variables))

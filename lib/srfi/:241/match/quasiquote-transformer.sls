@@ -37,7 +37,7 @@
 
     (define-record-type template-variable
       (nongenerative) (sealed #t) (opaque #t)
-      (fields identifier   ; Name
+      (fields name   ; Name
               expression)) ; Bound expression
 
     ;; Make a list of template variables and bind them to
@@ -64,7 +64,7 @@
                                  more-templates)
         (define identifiers
           (map (lambda (vs)
-                 (map template-variable-identifier vs))
+                 (map template-variable-name vs))
                variabless))
 
         (let loop ([depth depth] [more more-templates])
@@ -266,7 +266,7 @@
          (let-values ([(out vars)
                        (generate-output #'k #'tmpl 0 ellipsis?)])
            (with-syntax ([(x ...)
-                          (map template-variable-identifier vars)]
+                          (map template-variable-name vars)]
                          [(e ...)
                           (map template-variable-expression vars)])
              #`(let ([x e] ...)
