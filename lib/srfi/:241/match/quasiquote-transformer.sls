@@ -274,15 +274,4 @@
         [_
          (syntax-violation who "invalid syntax" form)]))
 
-  (define (append-n-map n proc . arg*)
-    (let loop ([n n] [arg* arg*])
-      (if (zero? n)
-          (apply map proc arg*)
-          (let ([n (- n 1)])
-            (apply append
-                   (apply map
-                          (lambda arg*
-                            (loop n arg*))
-                          arg*))))))
-
   )

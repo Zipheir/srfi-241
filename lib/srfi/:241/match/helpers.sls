@@ -24,7 +24,7 @@
 
 (library (srfi :241 match helpers)
   (export make-identifier-hashtable invoke ellipsis? underscore? length+
-          split-at)
+          split-at append-n-map)
   (import (rnrs))
 
   (define (identifier-hash id)
@@ -64,4 +64,19 @@
           (values '() ls)
           (let-values ([(ls1 ls2)
                         (f (cdr ls) (- k 1))])
-            (values (cons (car ls) ls1) ls2))))))
+            (values (cons (car ls) ls1) ls2)))))
+
+  ;; Flatten the arguments n times, then map *proc* over the
+  ;; remaining list.
+  (define (append-n-map n proc . arg*)
+    (let loop ([n n] [arg* arg*])
+      (if (zero? n)
+          (apply map proc arg*)
+          (let ([n (- n 1)])
+            (apply append
+                   (apply map
+                          (lambda arg*
+                            (loop n arg*))
+                          arg*))))))
+
+  )
