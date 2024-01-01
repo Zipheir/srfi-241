@@ -62,7 +62,7 @@
                                  variabless
                                  depth
                                  more-templates)
-        (define identifiers
+        (define variable-names
           (map (lambda (vs)
                  (map template-variable-name vs))
                variabless))
@@ -75,7 +75,7 @@
              (let-values ([(out2 vars2)
                            (generate-output keyword #'tm 0 ellipsis?)])
                (check-bindings templates variabless)
-               (with-syntax ([((id ...) ...) identifiers]
+               (with-syntax ([((id ...) ...) variable-names]
                              [(out1 ...) outs])
                  ;; FIXME: Cryptic.
                  (values #`(append (append-n-map #,depth
