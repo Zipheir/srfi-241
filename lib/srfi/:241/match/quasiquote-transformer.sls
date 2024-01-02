@@ -141,10 +141,10 @@
                           (append vs vars)))
               (let-values
                ([(out* vars*)
-                 (generate-output* keyword
-                                   unquoted-templates
-                                   (- level 1)
-                                   ellipsis?)])
+                 (generate-list-output keyword
+                                       unquoted-templates
+                                       (- level 1)
+                                       ellipsis?)])
                 (if (and (null? vars) (null? vars*))
                     (values
                      #`'((unquote-splicing ,@unquoted-templates) .
@@ -194,8 +194,8 @@
         [#(el ...) (generate-vector #'(el ...))]
         [constant (values #''constant '())]))
 
-      (define (generate-output* keyword template* level ellipsis?)
-        (let build ([tmpl* template*])
+      (define (generate-list-output keyword templates level ellipsis?)
+        (let build ([tmpl* templates])
           (if (null? tmpl*)
               (values '() '())
               (let-values ([(out vars)
