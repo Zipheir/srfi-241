@@ -184,12 +184,12 @@
         [((unquote expr ...) ell . tmpl2)
          (and (zero? level) (ellipsis? #'ell))
          (generate-simple-unquote-ellipsis #'(expr ...) #'tmpl2)]
+        [((unquote-splicing tmpl1 ...) . tmpl2) (zero? level)
+         (generate-simple-unquote-ellipsis #'(tmpl1 ...) #'tmpl2)]
         [(tmpl1 ell . tmpl2) (and (zero? level) (ellipsis? #'ell))
          (generate-simple-ellipsis #'tmpl1 #'tmpl2)]
         [((unquote tmpl1 ...) . tmpl2)
          (generate-unquote #'(tmpl1 ...) #'tmpl2)]
-        [((unquote-splicing tmpl1 ...) . tmpl2) (zero? level)
-         (generate-simple-unquote-ellipsis #'(tmpl1 ...) #'tmpl2)]
         [(el1 . el2) (generate-pair #'el1 #'el2)]
         [#(el ...) (generate-vector #'(el ...))]
         [constant (values #''constant '())]))
