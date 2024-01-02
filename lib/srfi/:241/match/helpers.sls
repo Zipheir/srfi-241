@@ -24,7 +24,7 @@
 
 (library (srfi :241 match helpers)
   (export make-identifier-hashtable invoke ellipsis? underscore? length+
-          split-at append-n-map)
+          split-at append-n-map fold-right/two-values)
   (import (rnrs))
 
   (define (identifier-hash id)
@@ -78,5 +78,11 @@
                           (lambda arg*
                             (loop n arg*))
                           arg*))))))
+
+  (define (fold-right/two-values f z1 z2 xs)
+    (if (null? xs)
+        (values z1 z2)
+        (let-values ([(a b) (fold-right/two-values f z1 z2 (cdr xs))])
+          (f a b (car xs)))))
 
   )
