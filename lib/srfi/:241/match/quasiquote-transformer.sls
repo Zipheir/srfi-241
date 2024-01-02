@@ -153,32 +153,6 @@
                     (values #`(cons (list 'unquote #,@out*) #,out)
                             (append vars* vars)))))))
 
-      ;; Generate output for
-      ;; ((unquote-splicing <template> ...) . <template>)
-      (define (generate-splicing unquoted-templates more-templates)
-        ;; TODO: Use generate-ellipsis.
-        (let-values
-         ([(out vars)
-           (generate-output keyword more-templates level ellipsis?)])
-          (if (zero? level)
-              (let-values ([(ids vs)
-                            (generate-variables unquoted-templates)])
-                  (values #`(append #,@ids #,out)
-                          (append vs vars)))
-              (let-values ([(out* vars*)
-                            (generate-output* keyword
-                                              unquoted-templates
-                                              (- level 1)
-                                              ellipsis?)])
-                (if (and (null? vars) (null? vars*))
-                    (values
-                     #'`((unquote-splicing ,@unquoted-templates) .
-                          ,more-templates)
-                     '())
-                    (values
-                     #`(cons (list 'unquote-splicing #,@out*) #,out)
-                     (append vars* vars)))))))
-
       ;; Generate output for (template . more-templates).
       (define (generate-pair template more-templates)
         (let-values
@@ -214,8 +188,8 @@
          (generate-simple-ellipsis #'tmpl1 #'tmpl2)]
         [((unquote tmpl1 ...) . tmpl2)
          (generate-unquote #'(tmpl1 ...) #'tmpl2)]
-        [((unquote-splicing tmpl1 ...) . tmpl2)
-         (generate-splicing #'(tmpl1 ...) #'tmpl2)]
+        [((unquote-splicing tmpl1 ...) . tmpl2) (zero? level)
+         (generate-simple-unquote-ellipsis #'(tmpl1 ...) #'tmpl2)]
         [(el1 . el2) (generate-pair #'el1 #'el2)]
         [#(el ...) (generate-vector #'(el ...))]
         [constant (values #''constant '())]))
