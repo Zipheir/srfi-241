@@ -195,17 +195,16 @@
         [constant (values #''constant '())]))
 
       (define (generate-output* keyword template* level ellipsis?)
-        (let loop ([tmpl* template*] [out* '()] [vars* '()])
+        (let build ([tmpl* template*])
           (if (null? tmpl*)
-              (values (reverse out*) vars*)
-              (let ([tmpl (car tmpl*)]
-                    [tmpl* (cdr tmpl*)])
-                (let-values ([(out vars)
-                              (generate-output keyword
-                                               tmpl
-                                               level
-                                               ellipsis?)])
-                  (loop tmpl* (cons out out*) (append vars vars*)))))))
+              (values '() '())
+              (let-values ([(out vars)
+                            (generate-output keyword
+                                             (car tmpl*)
+                                             level
+                                             ellipsis?)]
+                           [(out* vars*) (build (cdr tmpl*))])
+                (values (cons out out*) (append vars vars*))))))
 
       (define (generate-nested keyword template level ellipsis?)
         (let-values ([(out vars)
