@@ -117,10 +117,7 @@
       ;;   ((*template* ellipsis) . *more-templates*)
       (define (generate-simple-ellipsis template more-templates)
         (let-values ([(out vs)
-                      (generate-output keyword
-                                       template
-                                       0
-                                       ellipsis?)])
+                      (generate-output keyword template 0 ellipsis?)])
           (generate-ellipsis (list template)
                              (list out)
                              (list vs)
@@ -236,13 +233,11 @@
         [(k tmpl)
          (let-values ([(out vars)
                        (generate-output #'k #'tmpl 0 ellipsis?)])
-           (with-syntax ([(x ...)
-                          (map template-variable-name vars)]
+           (with-syntax ([(x ...) (map template-variable-name vars)]
                          [(e ...)
                           (map template-variable-expression vars)])
              #`(let ([x e] ...)
                  #,out)))]
-        [_
-         (syntax-violation who "invalid syntax" form)]))
+        [_ (syntax-violation who "invalid syntax" form)]))
 
   )
