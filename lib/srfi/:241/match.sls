@@ -170,6 +170,13 @@
                                       #'head
                                       #'(body ...)
                                       #'tail)]
+          [#(head ... ell-pat ellipsis tail ...)
+           (ellipsis? #'ellipsis)
+           (generate-ellipsis-vector-matcher expression
+                                             #'(head ...)
+                                             #'ell-pat
+				             #'(tail ...))]
+          [#(pat ...) (generate-vector-matcher expression #'(pat ...))]
           [,u (underscore? #'u)      ; underscore is wild
            (values invoke '() '())]  ; no bindings
           [,x
@@ -315,6 +322,24 @@
                 (+ (pattern-variable-level v) 1)))
              expression-ids
              variables))
+
+      ;;; STUB
+      ;;; Build a matcher for a vector pattern with an ellipsis
+      ;;; sub-pattern.
+      (define (generate-ellipsis-vector-matcher expression
+                                                head-patterns
+                                                ellipsis-pattern
+                                                tail-patterns)
+        (syntax-violation who
+                          "vector patterns not yet implemented"
+                          expression))
+
+      ;;; STUB
+      ;;; Build a matcher for a simple vector pattern.
+      (define (generate-vector-matcher expression patterns)
+        (syntax-violation who
+                          "vector patterns not yet implemented"
+                          expression))
 
       ;;; Bind cata value-ids to (lists of ...) recursively-generated
       ;;; values, with the resulting list-depth being equal to the
