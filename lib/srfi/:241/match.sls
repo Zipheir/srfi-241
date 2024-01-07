@@ -337,7 +337,8 @@
             (values
              (lambda (generate-more)
                #`(let ([ve #,expression])
-                   (if (= (vector-length ve) #,(length patterns))
+                   (if (and (vector? ve)
+                            (= (vector-length ve) #,(length patterns)))
                        #,(generate generate-more)
                        (#,(fail-clause)))))
              pvars
