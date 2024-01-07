@@ -170,12 +170,6 @@
                                       #'head
                                       #'(body ...)
                                       #'tail)]
-          [#(head ... ell-pat ellipsis tail ...)
-           (ellipsis? #'ellipsis)
-           (generate-ellipsis-vector-matcher expression
-                                             #'(head ...)
-                                             #'ell-pat
-				             #'(tail ...))]
           [#(pat ...) (generate-vector-matcher expression #'(pat ...))]
           [,u (underscore? #'u)      ; underscore is wild
            (values invoke '() '())]  ; no bindings
