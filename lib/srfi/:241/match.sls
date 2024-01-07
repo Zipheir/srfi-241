@@ -368,8 +368,8 @@
       ;;; values, with the resulting list-depth being equal to the
       ;;; ellipsis level of the cata variables.
       ;;;
-      ;;; Unellipsized cata variables are simply bound to the result
-      ;;; of invoking the catamorphism operator on the bound expression.
+      ;;; Unellipsized cata variables are bound to the result of
+      ;;; invoking the catamorphism operator on the bound expression.
       (define (generate-map-values operator value-ids binding level)
         (let generate-loop ([level level])
           (if (zero? level)
