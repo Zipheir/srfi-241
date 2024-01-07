@@ -1,4 +1,4 @@
-SCHEME = chezscheme --libdirs lib/ --program
+SCHEME = scheme --libdirs lib/ --program
 
 check:
 	$(SCHEME) test-quasiquote.sps
