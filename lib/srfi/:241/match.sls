@@ -331,9 +331,38 @@
       ;;; STUB
       ;;; Build a matcher for a simple vector pattern.
       (define (generate-vector-matcher expression patterns)
-        (syntax-violation who
-                          "vector patterns not yet implemented"
-                          expression))
+        (with-syntax ([(ve) (generate-temporaries '(ve))])
+          (let-values ([(generate pvars catas)
+                        (vector-matcher-help #'ve patterns 0)])
+            (values
+             (lambda (generate-more)
+               #`(let ([ve #,expression])
+                   (if (= (vector-length ve) #,(length patterns))
+                       #,(generate generate-more)
+                       (#,(fail-clause)))))
+             pvars
+             catas))))
+
+      ;;; Build matchers for the elements of a vector pattern.
+      ;;; FIXME: Avoid emitting nested lets when binding names to
+      ;;; vector elements.
+      (define (vector-matcher-help expression patterns index)
+        (syntax-case patterns ()
+          [() (values invoke '() '())]
+          [(pat . more-patterns)
+           (with-syntax ([(e) (generate-temporaries '(e))])
+             (let*-values ([(mat1 pvars1 catas1)
+                            (generate-matcher #'e #'pat)]
+                           [(mat2 pvars2 catas2)
+                            (vector-matcher-help expression
+                                                 #'more-patterns
+                                                 (+ index 1))])
+               (values
+                (lambda (generate-more)
+                  #`(let ([e (vector-ref #,expression #,index)])
+                      #,(mat1 (lambda () (mat2 generate-more)))))
+                (append pvars1 pvars2)
+                (append catas1 catas2))))]))
 
       ;;; Bind cata value-ids to (lists of ...) recursively-generated
       ;;; values, with the resulting list-depth being equal to the
