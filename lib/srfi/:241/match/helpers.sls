@@ -24,7 +24,7 @@
 
 (library (srfi :241 match helpers)
   (export make-identifier-hashtable invoke ellipsis? underscore? length+
-          split-at append-n-map fold-right/two-values)
+          split-at append-n-map fold-right/two-values iota)
   (import (rnrs))
 
   (define (identifier-hash id)
@@ -85,4 +85,10 @@
         (let-values ([(a b) (fold-right/two-values f z1 z2 (cdr xs))])
           (f a b (car xs)))))
 
+  ;;; Simplified version of SRFI 1 iota.
+  (define (iota count)
+    (let loop ([ks '()] [i 0])
+      (if (= i count)
+          (reverse ks)
+          (loop (cons i ks) (+ i 1)))))
   )

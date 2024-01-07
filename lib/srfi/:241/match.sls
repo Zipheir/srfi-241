@@ -27,6 +27,7 @@
   (export match
           unquote ... -> guard)
   (import (rnrs (6))
+          (rnrs io simple (6))
           (srfi :39 parameters)
           (srfi :241 match helpers)
           (srfi :241 match quasiquote-transformer))
@@ -208,6 +209,25 @@
          '()
          '()))
 
+      ;;; Match the expressions against the patterns element-wise.
+      ;;; Basically, a fold on patterns. TODO: Can we use this in
+      ;;; more places?
+      (define (generate-chain expressions patterns)
+        (syntax-case (list expressions patterns) ()
+          [((e ...) (p ...))
+           (let chain ([es #'(e ...)] [ps #'(p ...)])
+             (if (null? es)
+                 (values invoke '() '())
+                 (let-values ([(mat1 pvars1 catas1)
+                               (generate-matcher (car es) (car ps))]
+                              [(mat2 pvars2 catas2)
+                               (chain (cdr es) (cdr ps))])
+                   (values
+                    (lambda (generate-more)
+                      (mat1 (lambda () (mat2 generate-more))))
+                    (append pvars1 pvars2)
+                    (append catas1 catas2)))))]))
+
       ;;; Match the head of expr with car-pat and its tail with
       ;;; cdr-pat.
       (define (generate-pair-matcher expr car-pattern cdr-pattern)
@@ -333,7 +353,7 @@
       (define (generate-vector-matcher expression patterns)
         (with-syntax ([(ve) (generate-temporaries '(ve))])
           (let-values ([(generate pvars catas)
-                        (vector-matcher-help #'ve patterns 0)])
+                        (vector-matcher-help #'ve patterns)])
             (values
              (lambda (generate-more)
                #`(let ([ve #,expression])
@@ -345,25 +365,17 @@
              catas))))
 
       ;;; Build matchers for the elements of a vector pattern.
-      ;;; FIXME: Avoid emitting nested lets when binding names to
-      ;;; vector elements.
-      (define (vector-matcher-help expression patterns index)
-        (syntax-case patterns ()
-          [() (values invoke '() '())]
-          [(pat . more-patterns)
-           (with-syntax ([(e) (generate-temporaries '(e))])
-             (let*-values ([(mat1 pvars1 catas1)
-                            (generate-matcher #'e #'pat)]
-                           [(mat2 pvars2 catas2)
-                            (vector-matcher-help expression
-                                                 #'more-patterns
-                                                 (+ index 1))])
-               (values
-                (lambda (generate-more)
-                  #`(let ([e (vector-ref #,expression #,index)])
-                      #,(mat1 (lambda () (mat2 generate-more)))))
-                (append pvars1 pvars2)
-                (append catas1 catas2))))]))
+      (define (vector-matcher-help expression patterns)
+        (with-syntax ([(e ...) (generate-temporaries patterns)]
+                      [(i ...) (iota (length patterns))])
+          (let-values ([(generate pvars catas)
+                        (generate-chain #'(e ...) patterns)])
+            (values
+             (lambda (generate-more)
+               #`(let ([e (vector-ref #,expression i)] ...)
+                   #,(generate generate-more)))
+             pvars
+             catas))))
 
       ;;; Bind cata value-ids to (lists of ...) recursively-generated
       ;;; values, with the resulting list-depth being equal to the
