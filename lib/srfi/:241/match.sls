@@ -368,30 +368,27 @@
       ;;; Build a matcher for a simple vector pattern.
       (define (generate-vector-matcher expression patterns)
         (with-syntax ([(ve) (generate-temporaries '(ve))])
-          (let-values ([(generate pvars catas)
-                        (vector-matcher-help #'ve patterns)])
-            (values
-             (lambda (generate-more)
-               #`(let ([ve #,expression])
-                   (if (and (vector? ve)
-                            (= (vector-length ve) #,(length patterns)))
-                       #,(generate generate-more)
-                       (#,(fail-clause)))))
-             pvars
-             catas))))
+          (let ([glue
+                 (lambda (generate-more)
+                   #`(let ([ve #,expression])
+                       (if (and (vector? ve)
+                                (= (vector-length ve)
+                                   #,(length patterns)))
+                           #,(generate-more)
+                           (#,(fail-clause)))))])
+            (sequence (values glue '() '())
+                      (vector-matcher-help #'ve patterns)))))
 
       ;;; Build matchers for the elements of a vector pattern.
       (define (vector-matcher-help expression patterns)
         (with-syntax ([(e ...) (generate-temporaries patterns)]
                       [(i ...) (iota (length patterns))])
-          (let-values ([(generate pvars catas)
-                        (generate-chain #'(e ...) patterns)])
-            (values
-             (lambda (generate-more)
-               #`(let ([e (vector-ref #,expression i)] ...)
-                   #,(generate generate-more)))
-             pvars
-             catas))))
+          (let ([glue
+                 (lambda (generate-more)
+                   #`(let ([e (vector-ref #,expression i)] ...)
+                       #,(generate-more)))])
+            (sequence (values glue '() '())
+                      (generate-chain #'(e ...) patterns)))))
 
       ;;; Bind cata value-ids to (lists of ...) recursively-generated
       ;;; values, with the resulting list-depth being equal to the
