@@ -24,7 +24,7 @@
 
 (library (srfi :241 match helpers)
   (export make-identifier-hashtable invoke ellipsis? underscore? length+
-          split-at append-n-map fold-right/two-values)
+          split-at append-n-map fold-right/two-values list/mv)
   (import (rnrs))
 
   (define (identifier-hash id)
@@ -85,4 +85,9 @@
         (let-values ([(a b) (fold-right/two-values f z1 z2 (cdr xs))])
           (f a b (car xs)))))
 
+  ;; Simplified version of SRFI 210 form.
+  (define-syntax list/mv
+    (syntax-rules ()
+      [(_ producer)
+       (let-values ([vs producer]) vs)]))
   )
