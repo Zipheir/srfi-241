@@ -185,6 +185,25 @@
            (ill-formed-match-pattern-violation pattern)]
           [_ (generate-constant-matcher expression pattern)]))
 
+      ;;; Fold together a sequence of matcher expressions, chaining
+      ;;; the code generators and appending the variable lists. Each
+      ;;; expression must evaluate to three values.
+      (define-syntax sequence
+        (syntax-rules ()
+          ((_ matcher-expr ...)
+           (apply
+            values
+            (fold-right %matcher-sequence-2
+                        (list invoke '() '())
+                        (list (list/mv matcher-expr) ...))))))
+
+      (define (%matcher-sequence-2 trip1 trip2)
+        (let ([matcher1 (car trip1)] [matcher2 (car trip2)])
+          (list (lambda (gen-more)
+                  (matcher1 (lambda () (matcher2 gen-more))))
+                (append (list-ref trip1 1) (list-ref trip2 1))
+                (append (list-ref trip1 2) (list-ref trip2 2)))))
+
       (define (generate-cata-matcher operator expression ids)
         (with-syntax ([(x) (generate-temporaries '(x))])
           (values
@@ -232,18 +251,15 @@
       ;;; cdr-pat.
       (define (generate-pair-matcher expr car-pattern cdr-pattern)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
-          (let*-values ([(mat1 pvars1 catas1)
-                         (generate-matcher #'e1 car-pattern)]
-                        [(mat2 pvars2 catas2)
-                         (generate-matcher #'e2 cdr-pattern)])
-            (values
-             (lambda (generate-more)
-               #`(if (pair? #,expr)
-                     (let ([e1 (car #,expr)]
-                           [e2 (cdr #,expr)])
-                       #,(mat1 (lambda () (mat2 generate-more))))
-                     (#,(fail-clause))))
-             (append pvars1 pvars2) (append catas1 catas2)))))
+          (let ([glue (lambda (generate-more)
+                        #`(if (pair? #,expr)
+                              (let ([e1 (car #,expr)]
+                                    [e2 (cdr #,expr)])
+                                #,(generate-more))
+                              (#,(fail-clause))))])
+            (sequence (values glue '() '())
+                      (generate-matcher #'e1 car-pattern)
+                      (generate-matcher #'e2 cdr-pattern)))))
 
       (define (generate-ellipsis-matcher expression
                                          head-pattern

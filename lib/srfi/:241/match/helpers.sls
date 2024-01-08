@@ -24,7 +24,7 @@
 
 (library (srfi :241 match helpers)
   (export make-identifier-hashtable invoke ellipsis? underscore? length+
-          split-at append-n-map fold-right/two-values iota)
+          split-at append-n-map fold-right/two-values iota list/mv)
   (import (rnrs))
 
   (define (identifier-hash id)
@@ -91,4 +91,10 @@
       (if (= i count)
           (reverse ks)
           (loop (cons i ks) (+ i 1)))))
+
+  ;; Simplified version of SRFI 210 form.
+  (define-syntax list/mv
+    (syntax-rules ()
+      [(_ producer)
+       (let-values ([vs producer]) vs)]))
   )
