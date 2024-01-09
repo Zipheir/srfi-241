@@ -200,23 +200,11 @@
                  (#,(fail-clause))))))
 
       ;;; Match the expressions against the patterns element-wise.
-      ;;; Basically, a fold on patterns. TODO: Can we use this in
-      ;;; more places?
       (define (generate-chain expressions patterns)
-        (syntax-case (list expressions patterns) ()
-          [((e ...) (p ...))
-           (let chain ([es #'(e ...)] [ps #'(p ...)])
-             (if (null? es)
-                 (values invoke '() '())
-                 (let-values ([(mat1 pvars1 catas1)
-                               (generate-matcher (car es) (car ps))]
-                              [(mat2 pvars2 catas2)
-                               (chain (cdr es) (cdr ps))])
-                   (values
-                    (lambda (generate-more)
-                      (mat1 (lambda () (mat2 generate-more))))
-                    (append pvars1 pvars2)
-                    (append catas1 catas2)))))]))
+        (syntax-case patterns ()
+          [(p ...)
+           (apply matcher-sequence
+                  (map generate-matcher expressions #'(p ...)))]))
 
       ;;; Match the head of expr with car-pat and its tail with
       ;;; cdr-pat.
@@ -339,26 +327,28 @@
       (define (generate-vector-matcher expression patterns)
         (with-syntax ([(ve) (generate-temporaries '(ve))])
           (let ([glue
-                 (lambda (generate-more)
-                   #`(let ([ve #,expression])
-                       (if (and (vector? ve)
-                                (= (vector-length ve)
-                                   #,(length patterns)))
-                           #,(generate-more)
-                           (#,(fail-clause)))))])
-            (sequence (values glue '() '())
-                      (vector-matcher-help #'ve patterns)))))
+                 (make-simple-matcher
+                  (lambda (generate-more)
+                    #`(let ([ve #,expression])
+                        (if (and (vector? ve)
+                                 (= (vector-length ve)
+                                    #,(length patterns)))
+                            #,(generate-more)
+                            (#,(fail-clause))))))])
+            (matcher-sequence glue
+                              (vector-matcher-help #'ve patterns)))))
 
       ;;; Build matchers for the elements of a vector pattern.
       (define (vector-matcher-help expression patterns)
         (with-syntax ([(e ...) (generate-temporaries patterns)]
                       [(i ...) (iota (length patterns))])
           (let ([glue
-                 (lambda (generate-more)
-                   #`(let ([e (vector-ref #,expression i)] ...)
-                       #,(generate-more)))])
-            (sequence (values glue '() '())
-                      (generate-chain #'(e ...) patterns)))))
+                 (make-simple-matcher
+                  (lambda (generate-more)
+                    #`(let ([e (vector-ref #,expression i)] ...)
+                        #,(generate-more))))])
+            (matcher-sequence glue
+                              (generate-chain #'(e ...) patterns)))))
 
       ;;; Bind cata value-ids to (lists of ...) recursively-generated
       ;;; values, with the resulting list-depth being equal to the
