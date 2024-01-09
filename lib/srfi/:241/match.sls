@@ -30,6 +30,7 @@
           (rnrs io simple (6))
           (srfi :39 parameters)
           (srfi :241 match helpers)
+          (srfi :241 match matchers)
           (srfi :241 match quasiquote-transformer))
 
   (define-syntax ->
@@ -138,17 +139,8 @@
                           form
                           pattern))
 
-      ;;; The following procedures emit the matcher code by chaining
-      ;;; matcher-generators.
-      ;;;
-      ;;; A matcher-generator is a procedure of one argument. When
-      ;;; invoked on a continuation, it produces matching code for its
-      ;;; pattern and calls its argument to produce the rest of the
-      ;;; matcher.
-
-      ;;; Translates a pattern and input expression and returns three
-      ;;; values: a matcher-generator, a list of *patterns*'s pattern
-      ;;; variables, and its list of cata-bindings.
+      ;;; Translates a pattern and input expression and return a
+      ;;; matcher object.
       (define (generate-matcher expression pattern)
         (syntax-case pattern (-> unquote)
           [,[cata-operator -> y ...]           ; Named cata-pattern
@@ -173,7 +165,7 @@
                                       #'tail)]
           [#(pat ...) (generate-vector-matcher expression #'(pat ...))]
           [,u (underscore? #'u)      ; underscore is wild
-           (values invoke '() '())]  ; no bindings
+           unit-matcher]             ; no bindings
           [,x
            (identifier? #'x)
            (generate-variable-matcher expression #'x)]
@@ -185,48 +177,27 @@
            (ill-formed-match-pattern-violation pattern)]
           [_ (generate-constant-matcher expression pattern)]))
 
-      ;;; Fold together a sequence of matcher expressions, chaining
-      ;;; the code generators and appending the variable lists. Each
-      ;;; expression must evaluate to three values.
-      (define-syntax sequence
-        (syntax-rules ()
-          ((_ matcher-expr ...)
-           (apply
-            values
-            (fold-right %matcher-sequence-2
-                        (list invoke '() '())
-                        (list (list/mv matcher-expr) ...))))))
-
-      (define (%matcher-sequence-2 trip1 trip2)
-        (let ([matcher1 (car trip1)] [matcher2 (car trip2)])
-          (list (lambda (gen-more)
-                  (matcher1 (lambda () (matcher2 gen-more))))
-                (append (list-ref trip1 1) (list-ref trip2 1))
-                (append (list-ref trip1 2) (list-ref trip2 2)))))
-
       (define (generate-cata-matcher operator expression ids)
         (with-syntax ([(x) (generate-temporaries '(x))])
-          (values
+          (make-matcher
            invoke
            (list (make-pattern-variable #'x expression 0))
            (list (make-cata-binding operator ids #'x)))))
 
       ;;; Match expr by binding a pattern variable named *id* to it.
       (define (generate-variable-matcher expression id)
-        (values
+        (make-matcher
          invoke
          (list (make-pattern-variable id expression 0))
          '()))
 
       ;;; Match expr against the constant object.
       (define (generate-constant-matcher expression object)
-        (values
+        (make-simple-matcher
          (lambda (generate-more)
            #`(if (equal? #,expression '#,object)
                  #,(generate-more)
-                 (#,(fail-clause))))
-         '()
-         '()))
+                 (#,(fail-clause))))))
 
       ;;; Match the expressions against the patterns element-wise.
       ;;; Basically, a fold on patterns. TODO: Can we use this in
@@ -251,46 +222,48 @@
       ;;; cdr-pat.
       (define (generate-pair-matcher expr car-pattern cdr-pattern)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
-          (let ([glue (lambda (generate-more)
-                        #`(if (pair? #,expr)
-                              (let ([e1 (car #,expr)]
-                                    [e2 (cdr #,expr)])
-                                #,(generate-more))
-                              (#,(fail-clause))))])
-            (sequence (values glue '() '())
-                      (generate-matcher #'e1 car-pattern)
-                      (generate-matcher #'e2 cdr-pattern)))))
+          (let ([glue (make-simple-matcher
+                       (lambda (generate-more)
+                         #`(if (pair? #,expr)
+                               (let ([e1 (car #,expr)]
+                                     [e2 (cdr #,expr)])
+                                 #,(generate-more))
+                               (#,(fail-clause)))))])
+            (matcher-sequence
+             glue
+             (generate-matcher #'e1 car-pattern)
+             (generate-matcher #'e2 cdr-pattern)))))
 
       (define (generate-ellipsis-matcher expression
                                          head-pattern
                                          body-patterns
                                          tail-pattern)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
-          (let*-values ([(mat1 pvars1 catas1)
-                         (generate-glob-matcher #'e1 head-pattern)]
-                        [(rest-patterns)
-                         (append body-patterns tail-pattern)]
-                        [(mat2 pvars2 catas2)
-                         (generate-list-matcher #'e2 rest-patterns)])
-            (values
+          (let* ([mat1 (generate-glob-matcher #'e1 head-pattern)]
+                 [rest-patterns (append body-patterns tail-pattern)]
+                 [mat2 (generate-list-matcher #'e2 rest-patterns)])
+            (make-matcher
              (lambda (generate-more)
                #`(split-right/continuations
                   #,expression
                   #,(length body-patterns)
                   (lambda (e1 e2)
-                    #,(mat1 (lambda () (mat2 generate-more))))
+                    #,((matcher-generator mat1)
+                       (lambda ()
+                         ((matcher-generator mat2) generate-more))))
                   #,(fail-clause)))
-             (append pvars1 pvars2)
-             (append catas1 catas2)))))
+             (append (matcher-pattern-variables mat1)
+                     (matcher-pattern-variables mat2))
+             (append (matcher-cata-variables mat1)
+                     (matcher-cata-variables mat2))))))
 
       ;;; Match the empty list.
       (define (generate-null-matcher expression)
-        (values (lambda (generate-more)
-                  #`(if (null? #,expression)
-                        #,(generate-more)
-                        (#,(fail-clause))))
-                '()
-                '()))
+        (make-simple-matcher
+         (lambda (generate-more)
+           #`(if (null? #,expression)
+                 #,(generate-more)
+                 (#,(fail-clause))))))
 
       ;;; Match expression recursively against patterns.
       (define (generate-list-matcher expression patterns)
@@ -299,20 +272,16 @@
           [,x (generate-matcher expression patterns)]
           [(pat . rest-patterns)
            (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
-             (let*-values ([(mat1 pvars1 catas1)
-                            (generate-matcher #'e1 #'pat)]
-                           [(mat2 pvars2 catas2)
-                            (generate-list-matcher #'e2  ; recur
-                                                   #'rest-patterns)])
-               (values
-                (lambda (generate-more)
-                  #`(let ([e1 (car #,expression)]
-                          [e2 (cdr #,expression)])
-                      #,(mat1
-                         (lambda ()
-                           (mat2 generate-more)))))
-                (append pvars1 pvars2)
-                (append catas1 catas2))))]
+             (let* ([mat1 (generate-matcher #'e1 #'pat)]
+                    [mat2 (generate-list-matcher #'e2  ; recur
+                                                 #'rest-patterns)]
+                    [glue
+                     (make-simple-matcher
+                      (lambda (generate-more)
+                        #`(let ([e1 (car #,expression)]
+                                [e2 (cdr #,expression)])
+                            #,(generate-more))))])
+               (matcher-sequence glue mat1 mat2)))]
           [_ (generate-matcher expression patterns)]))
 
       ;;; Build a matcher for an ellipsized pattern. This generates
@@ -321,20 +290,21 @@
       (define (generate-glob-matcher expression pattern)
         (with-syntax ([(e es loop)
                        (generate-temporaries '(e es loop))])
-          (let-values ([(mat ipvars catas)
-                        (generate-matcher #'e pattern)])
+          (let* ([mat (generate-matcher #'e pattern)]
+                 [ipvars (matcher-pattern-variables mat)]
+                 [catas (matcher-cata-variables mat)])
             (with-syntax ([(a ...)   ; ids for value accumulators
                            (generate-temporaries ipvars)]
                           [(ve ...)
                            (map pattern-variable-expression ipvars)])
-              (values
+              (make-matcher
                (lambda (generate-more)
                  #`(let loop ([es (reverse #,expression)]
                               [a '()] ...)
                      (if (null? es)
                          #,(generate-more)
                          (let ([e (car es)])
-                           #,(mat
+                           #,((matcher-generator mat)
                               (lambda ()
                                 #`(loop (cdr es)
                                         (cons ve a) ...)))))))
@@ -420,8 +390,11 @@
       (define (generate-clause keyword expression-id clause)
         (let*-values ([(pattern guard-expression body)
                        (parse-clause clause)]
-                      [(matcher pvars catas)
-                       (generate-matcher expression-id pattern)])
+                      [(matcher)
+                       (generate-matcher expression-id pattern)]
+                      [(pvars catas)
+                       (values (matcher-pattern-variables matcher)
+                               (matcher-cata-variables matcher))])
           (check-pattern-variables pvars)
           (check-cata-bindings catas)
           (with-syntax ([quasiquote (datum->syntax keyword 'quasiquote)]
@@ -440,7 +413,8 @@
                                                      #'(tmp ...)
                                                      #'((y ...) ...)
                                                      #'(z ...))])
-              (matcher
+              ;; Emit all of the matcher code.
+              ((matcher-generator matcher)
                (lambda ()
                  #`(let ([x u] ...)  ; bind all pattern variables
                      (if #,guard-expression
