@@ -218,23 +218,18 @@
                                          body-patterns
                                          tail-pattern)
         (with-syntax ([(e1 e2) (generate-temporaries '(e1 e2))])
-          (let* ([mat1 (generate-glob-matcher #'e1 head-pattern)]
-                 [rest-patterns (append body-patterns tail-pattern)]
-                 [mat2 (generate-list-matcher #'e2 rest-patterns)])
-            (make-matcher
-             (lambda (generate-more)
-               #`(split-right/continuations
-                  #,expression
-                  #,(length body-patterns)
-                  (lambda (e1 e2)
-                    #,((matcher-generator mat1)
-                       (lambda ()
-                         ((matcher-generator mat2) generate-more))))
-                  #,(fail-clause)))
-             (append (matcher-pattern-variables mat1)
-                     (matcher-pattern-variables mat2))
-             (append (matcher-cata-variables mat1)
-                     (matcher-cata-variables mat2))))))
+          (let* ([rest-patterns (append body-patterns tail-pattern)]
+                 [glue (make-simple-matcher
+                        (lambda (generate-more)
+                          #`(split-right/continuations
+                             #,expression
+                             #,(length body-patterns)
+                             (lambda (e1 e2) #,(generate-more))
+                             #,(fail-clause))))])
+            (matcher-sequence
+             glue
+             (generate-glob-matcher #'e1 head-pattern)
+             (generate-list-matcher #'e2 rest-patterns)))))
 
       ;;; Match the empty list.
       (define (generate-null-matcher expression)
