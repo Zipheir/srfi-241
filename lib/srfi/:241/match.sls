@@ -152,16 +152,21 @@
           ;; avoid misparsing '... . (unquote x)' as '... unquote x'.
           [(head ellipsis body ... . ,x)
            (and (ellipsis? #'ellipsis) (identifier? #'x))
-           (generate-ellipsis-matcher expression
-                                      #'head
-                                      #'(body ...)
-                                      #',x)]
+           (begin
+            (check-no-ellipses pattern #'(body ...))
+            (generate-ellipsis-matcher expression
+                                       #'head
+                                       #'(body ...)
+                                       #',x))]
           [(head ellipsis body ... . tail)
            (ellipsis? #'ellipsis)
-           (generate-ellipsis-matcher expression
-                                      #'head
-                                      #'(body ...)
-                                      #'tail)]
+           (begin
+            (check-no-ellipses pattern #'(body ...))
+            (check-no-ellipses pattern #'tail)
+            (generate-ellipsis-matcher expression
+                                       #'head
+                                       #'(body ...)
+                                       #'tail))]
           [,u (underscore? #'u)      ; underscore is wild
            unit-matcher]             ; no bindings
           [,x
@@ -212,6 +217,13 @@
              glue
              (generate-matcher #'e1 car-pattern)
              (generate-matcher #'e2 cdr-pattern)))))
+
+      (define (check-no-ellipses form pattern)
+        (when (if (list? pattern)
+                  (exists ellipsis? pattern)
+                  (ellipsis? pattern))
+          (syntax-violation who "extra ellipses in pattern"
+                            pattern form)))
 
       (define (generate-ellipsis-matcher expression
                                          head-pattern
