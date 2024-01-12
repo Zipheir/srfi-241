@@ -322,8 +322,7 @@
                           "vector patterns not yet implemented"
                           expression))
 
-      ;;; STUB
-      ;;; Build a matcher for a simple vector pattern.
+      ;;; Build a matcher for a vector pattern without ellipsis.
       (define (generate-vector-matcher expression patterns)
         (with-syntax ([(ve) (generate-temporaries '(ve))])
           (let ([glue
