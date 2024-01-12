@@ -12,7 +12,7 @@ style, and have made some semantic changes as well.
   of times in a pattern.
 
 * Only one ellipsis is allowed at each pattern level. SRFI 241 seems to
-  allow ambiguous patterns like `(,x ... ,y ... ,z ...), which I think
+  allow ambiguous patterns like `(,x ... ,y ... ,z ...)`, which I think
   is a serious bug. It may be possible to support a simple form of
   multi-ellipsis pattern, but it seems best to reject them all, for now.
 
