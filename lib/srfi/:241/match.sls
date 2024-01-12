@@ -163,6 +163,8 @@
                                       #'head
                                       #'(body ...)
                                       #'tail)]
+          [#(pat ...) (exists ellipsis? #'(pat ...))
+           (generate-ellipsis-vector-matcher expression #'(pat ...))]
           [#(pat ...) (generate-vector-matcher expression #'(pat ...))]
           [,u (underscore? #'u)      ; underscore is wild
            unit-matcher]             ; no bindings
@@ -314,13 +316,40 @@
       ;;; STUB
       ;;; Build a matcher for a vector pattern with an ellipsis
       ;;; sub-pattern.
-      (define (generate-ellipsis-vector-matcher expression
-                                                head-patterns
-                                                ellipsis-pattern
-                                                tail-patterns)
-        (syntax-violation who
-                          "vector patterns not yet implemented"
-                          expression))
+      (define (generate-ellipsis-vector-matcher expression patterns)
+        (let*-values ([(heads ell-pat tails)
+                       (parse-vector-patterns patterns)]
+                      [(min-length) (+ (length heads) (length tails))])
+          (with-syntax ([(ve) (generate-temporaries '(ve))])
+            (let ([mat1 (match-vector-left #'ve heads)]
+                  [mat2 (vector-glob-matcher #'ve
+                                             ell-pat
+                                             (length heads)
+                                             (length tails))]
+                  [mat3 (match-vector-right #'ve tails)]
+                  [glue (make-simple-matcher
+                         (lambda (generate-more)
+                           #`(let ([ve #,expression])
+                               (if (and (vector? ve)
+                                        (>= (vector-length ve)
+                                            #,min-length))
+                                   #,(generate-more)
+                                   (#,(fail-clause))))))])
+              (matcher-sequence glue mat1 mat2 mat3)))))
+
+      ;;; STUB
+      ;;; Break a pattern into head patterns, an ellipsized
+      ;;; pattern, and tail patterns and return those as multiple
+      ;;; values.
+      (define (parse-vector-patterns patterns)
+        (values '() #f '()))
+
+      ;;; STUB
+      (define (vector-glob-matcher expression
+                                   ell-pattern
+                                   start
+                                   tail-length)
+        (syntax-violation who "vector globs not yet implemented"))
 
       ;;; Build a matcher for a vector pattern without ellipsis.
       (define (generate-vector-matcher expression patterns)
@@ -335,10 +364,10 @@
                             #,(generate-more)
                             (#,(fail-clause))))))])
             (matcher-sequence glue
-                              (vector-matcher-help #'ve patterns)))))
+                              (match-vector-right #'ve patterns)))))
 
       ;;; Build matchers for the elements of a vector pattern.
-      (define (vector-matcher-help expression patterns)
+      (define (match-vector-left expression patterns)
         (with-syntax ([(e ...) (generate-temporaries patterns)]
                       [(i ...) (iota (length patterns))])
           (let ([glue
@@ -348,6 +377,23 @@
                         #,(generate-more))))])
             (matcher-sequence glue
                               (generate-chain #'(e ...) patterns)))))
+
+      ;;; Build matchers for the rightmost elements of a vector
+      ;;; pattern, matching from the last element.
+      (define (match-vector-right expression patterns)
+        (let ([len (length patterns)])
+          (with-syntax ([(e ...) (generate-temporaries patterns)]
+                        [(i ...) (iota len 1)])  ; offset from length
+            (let ([glue
+                   (make-simple-matcher
+                    (lambda (generate-more)
+                      #`(let ([vlen (vector-length #,expression)])
+                          (let ([e (vector-ref #,expression (- vlen i))]
+                                ...)
+                            #,(generate-more)))))])
+              (matcher-sequence glue
+                                (generate-chain #'(e ...)
+                                                (reverse patterns)))))))
 
       ;;; Bind cata value-ids to (lists of ...) recursively-generated
       ;;; values, with the resulting list-depth being equal to the

@@ -85,12 +85,18 @@
         (let-values ([(a b) (fold-right/two-values f z1 z2 (cdr xs))])
           (f a b (car xs)))))
 
-  ;;; Simplified version of SRFI 1 iota.
-  (define (iota count)
-    (let loop ([ks '()] [i 0])
-      (if (= i count)
-          (reverse ks)
-          (loop (cons i ks) (+ i 1)))))
+  ;; SRFI 1 iota
+  (define iota
+    (case-lambda
+      [(count) (iota count 0 1)]
+      [(count start) (iota count start 1)]
+      [(count start step)
+       (assert (>= count 0))
+       (let loop ([i 0] [ks '()])
+         (if (= i count)
+             (reverse ks)
+             (loop (+ i 1)
+                   (cons (+ start (* step i)) ks))))]))
 
   ;; Simplified version of SRFI 210 form.
   (define-syntax list/mv
