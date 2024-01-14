@@ -336,12 +336,16 @@
                                    (#,(fail-clause))))))])
               (matcher-sequence glue mat1 mat2 mat3)))))
 
-      ;;; STUB
       ;;; Break a pattern into head patterns, an ellipsized
       ;;; pattern, and tail patterns and return those as multiple
       ;;; values.
       (define (parse-vector-patterns patterns)
-        (values '() #f '()))
+        (let-values ([(heads more)
+                      (span (lambda (id) (not (ellipsis? id)))
+                             patterns)])
+          (syntax-case heads ()
+            [(head0 ... headN)
+             (values #'(head0 ...) #'headN (cdr more))])))
 
       ;;; STUB
       (define (vector-glob-matcher expression
