@@ -313,7 +313,6 @@
              expression-ids
              variables))
 
-      ;;; STUB
       ;;; Build a matcher for a vector pattern with an ellipsis
       ;;; sub-pattern.
       (define (generate-ellipsis-vector-matcher expression patterns)
