@@ -24,7 +24,8 @@
 
 (library (srfi :241 match helpers)
   (export make-identifier-hashtable invoke ellipsis? underscore? length+
-          split-at append-n-map fold-right/two-values list/mv)
+          split-at append-n-map fold-right/two-values iota list/mv
+          span)
   (import (rnrs))
 
   (define (identifier-hash id)
@@ -84,6 +85,29 @@
         (values z1 z2)
         (let-values ([(a b) (fold-right/two-values f z1 z2 (cdr xs))])
           (f a b (car xs)))))
+
+  ;; SRFI 1 iota
+  (define iota
+    (case-lambda
+      [(count) (iota count 0 1)]
+      [(count start) (iota count start 1)]
+      [(count start step)
+       (assert (>= count 0))
+       (let loop ([i 0] [ks '()])
+         (if (= i count)
+             (reverse ks)
+             (loop (+ i 1)
+                   (cons (+ start (* step i)) ks))))]))
+
+  ;; SRFI 1 span
+  (define (span pred xs)
+    (if (null? xs)
+        (values '() '())
+        (let ([x (car xs)])
+          (if (pred x)
+              (let-values ([(head tail) (span pred (cdr xs))])
+                (values (cons x head) tail))
+              (values '() xs)))))
 
   ;; Simplified version of SRFI 210 form.
   (define-syntax list/mv
