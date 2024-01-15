@@ -208,24 +208,24 @@
   )
 
 (test-group "Vectors"
-(test-assert (match '#() [#() #t] [,_ #f]))
-(test-assert (match '#(1) [#() #f] [,_ #t]))
-(test-assert (match '#() [#(1) #f] [,_ #t]))
-(test-assert (match '#(1) [#(1) #t] [,_ #f]))
-(test-assert (match '#(1 2) [#(1) #f] [,_ #t]))
-(test-assert (match '#(1) [#(1 2) #f] [,_ #t]))
-(test-assert (match '#(1 2) [#(1 2) #t] [,_ #f]))
+  (test-assert (match '#() [#() #t] [,_ #f]))
+  (test-assert (match '#(1) [#() #f] [,_ #t]))
+  (test-assert (match '#() [#(1) #f] [,_ #t]))
+  (test-assert (match '#(1) [#(1) #t] [,_ #f]))
+  (test-assert (match '#(1 2) [#(1) #f] [,_ #t]))
+  (test-assert (match '#(1) [#(1 2) #f] [,_ #t]))
+  (test-assert (match '#(1 2) [#(1 2) #t] [,_ #f]))
 
-(test-equal '(2 1)
-                (match '#(#(1) #(2))
-                  [#(#(,_) #(,_)) (list 2 1)]
-                  [,_ '()]))
-(test-equal '(2 1)
-                (match '#(1 2) [#(,x ,y) (list y x)] [,_ '()]))
-(test-equal '((4 3) 2 1)
-                (match '#(1 2 (3 4))
-                  [#(,x ,y (,u ,v)) (list (list v u) y x)]
-                  [,_ '()]))
+  (test-equal '(2 1)
+              (match '#(#(1) #(2))
+                [#(#(,_) #(,_)) (list 2 1)]
+                [,_ '()]))
+  (test-equal '(2 1)
+              (match '#(1 2) [#(,x ,y) (list y x)] [,_ '()]))
+  (test-equal '((4 3) 2 1)
+              (match '#(1 2 (3 4))
+                [#(,x ,y (,u ,v)) (list (list v u) y x)]
+                [,_ '()]))
   )
 
 ;;; Extra tests
