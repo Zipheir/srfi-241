@@ -120,77 +120,73 @@
      '(list (car a) (car b) (car c) (car d) (car e) (car f) (car g))
      (k '(foo (a) (b c d e) () (f g)))))
 
+  ;; TODO: More tests of this parser.
   (letrec*
-   ((parse1  ;; FIXME: Break this up.
-    (lambda (x)
-      (define Prog
-        (lambda (x)
-          (match x
-            [(program ,[Stmt -> s*] ... ,[Expr -> e])
-             `(begin ,s* ... ,e)]
-            [,x (assertion-violation 'parse "invalid program" x)])))
-      (define Stmt
-        (lambda (x)
-          (match x
-            [(if ,[Expr -> e] ,[Stmt -> s1] ,[Stmt -> s2])
-             `(if ,e ,s1 ,s2)]
-            [(set! ,v ,[Expr -> e])
-             (guard (symbol? v))
-             `(set! ,v ,e)]
-            [,x (assertion-violation 'parse "invalid statement" x)])))
-      (define Expr
-        (lambda (x)
-          (match x
-            [,v (guard (symbol? v)) v]
-            [,n (guard (integer? n)) n]
-            [(if ,[e1] ,[e2] ,[e3])
-             `(if ,e1 ,e2 ,e3)]
-            [(,[rator] ,[rand*] ...) `(,rator ,rand* ...)]
-            [,x (assertion-violation 'parse "invalid expression" x)])))
-      (Prog x))))
+   ([Prog
+     (lambda (x)
+       (match x
+         [(program ,[Stmt -> s*] ... ,[Expr -> e])
+          `(begin ,s* ... ,e)]
+         [,x (assertion-violation 'parse "invalid program" x)]))]
+    [Stmt
+     (lambda (x)
+       (match x
+         [(if ,[Expr -> e] ,[Stmt -> s1] ,[Stmt -> s2])
+          `(if ,e ,s1 ,s2)]
+         [(set! ,v ,[Expr -> e])
+          (guard (symbol? v))
+          `(set! ,v ,e)]
+         [,x (assertion-violation 'parse "invalid statement" x)]))]
+    [Expr
+     (lambda (x)
+       (match x
+         [,v (guard (symbol? v)) v]
+         [,n (guard (integer? n)) n]
+         [(if ,[e1] ,[e2] ,[e3])
+          `(if ,e1 ,e2 ,e3)]
+         [(,[rator] ,[rand*] ...) `(,rator ,rand* ...)]
+         [,x (assertion-violation 'parse "invalid expression" x)]))])
 
   (test-equal '(begin (set! x 3) (+ x 4))
-                  (parse1 '(program (set! x 3) (+ x 4)))))
+                  (Prog '(program (set! x 3) (+ x 4)))))
 
+  ;; TODO: More tests of this parser.
   (letrec*
-   ((parse2  ;; FIXME: Break this up.
+   ([Prog
      (lambda (x)
-       (define Prog
-         (lambda (x)
-           (match x
-             [(program ,[Stmt -> s*] ... ,[(Expr '()) -> e])
-              `(begin ,s* ... ,e)]
-             [,x (assertion-violation 'parse "invalid program" x)])))
-       (define Stmt
-         (lambda (x)
-           (match x
-             [(if ,[(Expr '()) -> e] ,[Stmt -> s1] ,[Stmt -> s2])
-              `(if ,e ,s1 ,s2)]
-             [(set! ,v ,[(Expr '()) -> e])
-              (guard (symbol? v))
-              `(set! ,v ,e)]
-             [,x (assertion-violation 'parse "invalid statement" x)])))
-       (define Expr
-         (lambda (env)
-           (lambda (x)
-             (match x
-               [,v (guard (symbol? v)) v]
-               [,n (guard (integer? n)) n]
-               [(if ,[e1] ,[e2] ,[e3])
-                (guard (not (memq 'if env)))
-                `(if ,e1 ,e2 ,e3)]
-               [(let ([,v ,[e]]) ,[(Expr (cons v env)) -> body])
-                (guard (not (memq 'let env)) (symbol? v))
-                `(let ([,v ,e]) ,body)]
-               [(,[rator] ,[rand*] ...)
-                `(call ,rator ,rand* ...)]
-               [,x (assertion-violation 'parse "invalid expression" x)]))))
-       (Prog x))))
+       (match x
+         [(program ,[Stmt -> s*] ... ,[(Expr '()) -> e])
+          `(begin ,s* ... ,e)]
+         [,x (assertion-violation 'parse "invalid program" x)]))]
+    [Stmt
+     (lambda (x)
+       (match x
+         [(if ,[(Expr '()) -> e] ,[Stmt -> s1] ,[Stmt -> s2])
+          `(if ,e ,s1 ,s2)]
+         [(set! ,v ,[(Expr '()) -> e])
+          (guard (symbol? v))
+          `(set! ,v ,e)]
+         [,x (assertion-violation 'parse "invalid statement" x)]))]
+    [Expr
+     (lambda (env)
+       (lambda (x)
+         (match x
+           [,v (guard (symbol? v)) v]
+           [,n (guard (integer? n)) n]
+           [(if ,[e1] ,[e2] ,[e3])
+            (guard (not (memq 'if env)))
+            `(if ,e1 ,e2 ,e3)]
+           [(let ([,v ,[e]]) ,[(Expr (cons v env)) -> body])
+            (guard (not (memq 'let env)) (symbol? v))
+            `(let ([,v ,e]) ,body)]
+           [(,[rator] ,[rand*] ...)
+            `(call ,rator ,rand* ...)]
+           [,x (assertion-violation 'parse "invalid expression" x)])))])
 
     (test-equal '(begin
                   (let ([if (if x list values)])
                     (call if 1 2 3)))
-                (parse2
+                (Prog
                  '(program
                     (let ([if (if x list values)])
                       (if 1 2 3))))))
