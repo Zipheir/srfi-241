@@ -54,7 +54,7 @@
 		  [((,x* ,y** ...) ...)
 		   (list x* y**)]))
 
-(define simple-eval
+(letrec* ((simple-eval
   (lambda (x)
     (match x
       [,i (guard (integer? i)) i]
@@ -62,7 +62,7 @@
       [(* ,[x*] ...) (apply * x*)]
       [(- ,[x] ,[y]) (- x y)]
       [(/ ,[x] ,[y]) (/ x y)]
-      [,x (assertion-violation 'simple-eval "invalid expression" x)])))
+      [,x (assertion-violation 'simple-eval "invalid expression" x)]))))
 
 (test-equal 6
 		(simple-eval '(+ 1 2 3)))
@@ -70,57 +70,62 @@
 		(simple-eval '(+ (- 0 1) (+ 2 3))))
 (test-assert (guard (c
 		[(assertion-violation? c) #t])
-	  (simple-eval '(- 1 2 3))))
+	  (simple-eval '(- 1 2 3)))))
 
-(define translate
+(letrec* ((translate
   (lambda (x)
     (match x
       [(let ((,var* ,expr*) ...) ,body ,body* ...)
        `((lambda ,var* ,body ,body* ...) ,expr* ...)]
-      [,x (assertion-violation 'translate "invalid expression" x)])))
+      [,x (assertion-violation 'translate "invalid expression" x)]))))
 
 (test-equal '((lambda (x y) (+ x y)) 3 4)
-		(translate '(let ((x 3) (y 4)) (+ x y))))
+		(translate '(let ((x 3) (y 4)) (+ x y)))))
 
-(define (f x)
-  (match x
-    [((,a ...) (,b ...)) `((,a . ,b) ...)]))
+(letrec* ((f
+  (lambda (x)
+    (match x
+      [((,a ...) (,b ...)) `((,a . ,b) ...)]))))
 
 (test-equal '((1 . a) (2 . b) (3 . c))
 		(f '((1 2 3) (a b c))))
 
 (test-assert (guard (c
 		[(assertion-violation? c) #t])
-	  (f '((1 2 3) (a b)))))
+	  (f '((1 2 3) (a b))))))
 
-(define (g x)
-  (match x
-    [(,a ,b ...) `((,a ,b) ...)]))
+(letrec* ((g
+  (lambda (x)
+    (match x
+      [(,a ,b ...) `((,a ,b) ...)]))))
 
 (test-assert (guard (c
 		[(assertion-violation? c) #t])
-	  (g '(1 2 3 4))))
+	  (g '(1 2 3 4)))))
 
-(define (h x)
-  (match x
-    [(let ([,x ,e1 ...] ...) ,b1 ,b2 ...)
-     `((lambda (,x ...) ,b1 ,b2 ...)
-       (begin ,e1 ...) ...)]))
+(letrec* ((h
+  (lambda (x)
+    (match x
+      [(let ([,x ,e1 ...] ...) ,b1 ,b2 ...)
+       `((lambda (,x ...) ,b1 ,b2 ...)
+         (begin ,e1 ...) ...)]))))
 
 (test-equal '((lambda (x y) (list x y))
 		  (begin (write 'one) 3)
 		  (begin (write 'two) 4))
-		(h '(let ((x (write 'one) 3) (y (write 'two) 4)) (list x y))))
+		(h '(let ((x (write 'one) 3) (y (write 'two) 4)) (list x y)))))
 
-(define (k x)
-  (match x
-    [(foo (,x ...) ...)
-     `(list (car ,x) ... ...)]))
+(letrec* ((k
+  (lambda (x)
+    (match x
+      [(foo (,x ...) ...)
+       `(list (car ,x) ... ...)]))))
 
 (test-equal '(list (car a) (car b) (car c) (car d) (car e) (car f) (car g))
-		(k '(foo (a) (b c d e) () (f g))))
+		(k '(foo (a) (b c d e) () (f g)))))
 
-(define parse1
+(letrec*
+ ((parse1
   (lambda (x)
     (define Prog
       (lambda (x)
@@ -146,12 +151,13 @@
            `(if ,e1 ,e2 ,e3)]
           [(,[rator] ,[rand*] ...) `(,rator ,rand* ...)]
           [,x (assertion-violation 'parse "invalid expression" x)])))
-    (Prog x)))
+    (Prog x))))
 
 (test-equal '(begin (set! x 3) (+ x 4))
-		(parse1 '(program (set! x 3) (+ x 4))))
+		(parse1 '(program (set! x 3) (+ x 4)))))
 
-(define parse2
+(letrec*
+ ((parse2
   (lambda (x)
     (define Prog
       (lambda (x)
@@ -183,7 +189,7 @@
             [(,[rator] ,[rand*] ...)
              `(call ,rator ,rand* ...)]
             [,x (assertion-violation 'parse "invalid expression" x)]))))
-    (Prog x)))
+    (Prog x))))
 
 (test-equal '(begin
 		   (let ([if (if x list values)])
@@ -191,22 +197,23 @@
 		(parse2
 		 '(program
 		      (let ([if (if x list values)])
-			(if 1 2 3)))))
+			(if 1 2 3))))))
 
-(define split
+(letrec*
+ ((split
   (lambda (ls)
     (match ls
       [() (values '() '())]
       [(,x) (values `(,x) '())]
       [(,x ,y . ,[odds evens])
        (values (cons x odds)
-               (cons y evens))])))
+               (cons y evens))]))))
 
 (test-equal '((a c e) (b d f))
 		(call-with-values
 		    (lambda ()
 		      (split '(a b c d e f)))
-		  list))
+		  list)))
   )
 
 ;;; Extra tests
