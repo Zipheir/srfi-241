@@ -31,7 +31,8 @@
           (srfi :39 parameters)
           (srfi :241 match helpers)
           (srfi :241 match matchers)
-          (srfi :241 match quasiquote-transformer))
+          (srfi :241 match quasiquote-transformer)
+          (only (chezscheme) format))
 
   (define-syntax ->
     (lambda (form)
@@ -347,12 +348,39 @@
             [(head0 ... headN)
              (values #'(head0 ...) #'headN (cdr more))])))
 
-      ;;; STUB
-      (define (vector-glob-matcher expression
+      ;;; Build a matcher for an ellipsized vector pattern. This
+      ;;; generates meta-variables to hold the lists of values
+      ;;; matched by *pattern*'s variables.
+      ;;;
+      ;;; FIXME: Simplify this.
+      (define (vector-glob-matcher vector-id
                                    ell-pattern
                                    start
-                                   tail-length)
-        (syntax-violation who "vector globs not yet implemented"))
+                                   tail-length) ; unmatched tail
+        (with-syntax ([(e i loop) (generate-temporaries '(e i loop))])
+          (let* ([mat (generate-matcher #'e ell-pattern)]
+                 [ipvars (matcher-pattern-variables mat)])
+            (with-syntax ([(a ...)  ; ids for value accumulators
+                           (generate-temporaries ipvars)]
+                          [(ve ...)
+                           (map pattern-variable-expression ipvars)])
+              ;; The vector elements are matched in reverse order
+              ;; so that the values can be consed onto the accumulators.
+              (make-matcher
+               (lambda (generate-more)
+                 #`(let loop ([i (- (vector-length #,vector-id)
+                                     #,tail-length
+                                     1)]
+                               [a '()] ...)
+                     (if (< i #,start)
+                         #,(generate-more)
+                         (let ([e (vector-ref #,vector-id i)])
+                           #,((matcher-generator mat)
+                              (lambda ()
+                                #`(loop (- i 1)
+                                        (cons ve a) ...)))))))
+               (make-meta-variables #'(a ...) ipvars)
+               (matcher-cata-variables mat))))))
 
       ;;; Build a matcher for a vector pattern without ellipsis.
       (define (generate-vector-matcher expression patterns)
