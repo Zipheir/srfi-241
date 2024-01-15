@@ -1,6 +1,7 @@
 #!r6rs
 
 ;; Copyright (C) Marc Nieper-Wißkirchen (2021).  All Rights Reserved.
+;; Copyright (C) Wolfgang Corcoran-Mathe (2024)
 
 ;; Permission is hereby granted, free of charge, to any person
 ;; obtaining a copy of this software and associated documentation
@@ -23,49 +24,53 @@
 ;; SOFTWARE.
 
 (import (except (rnrs) quasiquote)
+        (srfi :64)
         (srfi :241 match quasiquote))
 
-(assert (equal? '(list 3 4)
-                `(list ,(+ 1 2) 4)))
+(test-group "Quasiquote"
+(test-equal '(list 3 4)
+                `(list ,(+ 1 2) 4))
 
-(assert (equal? '(a 3 4 5 6 b)
-                `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b)))
+(test-equal '(a 3 4 5 6 b)
+                `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b))
 
-(assert (equal? '(a 3 4 5 6 b)
-                `(a ,(+ 1 2) ,(map abs '(4 -5 6)) ... b)))
+(test-equal '(a 3 4 5 6 b)
+                `(a ,(+ 1 2) ,(map abs '(4 -5 6)) ... b))
 
-(assert (equal? '((1 . a) (2 . b) (3 . c))
-                `((,'(1 2 3) . ,'(a b c)) ...)))
+(test-equal '((1 . a) (2 . b) (3 . c))
+                `((,'(1 2 3) . ,'(a b c)) ...))
 
-(assert (equal? '(((a x) (a 1)) ((a x) (a 2)) ((a x) (a 3)))
-                `(((a ,'((x 1) (x 2) (x 3))) ...) ...)))
+(test-equal '(((a x) (a 1)) ((a x) (a 2)) ((a x) (a 3)))
+                `(((a ,'((x 1) (x 2) (x 3))) ...) ...))
 
-(assert (equal? '((a x) (a 1) (a x) (a 2) (a x) (a 3))
-                `((a ,'((x 1) (x 2) (x 3))) ... ...)))
+(test-equal '((a x) (a 1) (a x) (a 2) (a x) (a 3))
+                `((a ,'((x 1) (x 2) (x 3))) ... ...))
 
-(assert (equal? '((a x 1) (a x 2) (a x 3))
-                `((a ,@'((x 1) (x 2) (x 3))) ...)))
+(test-equal '((a x 1) (a x 2) (a x 3))
+                `((a ,@'((x 1) (x 2) (x 3))) ...))
 
-(assert (equal? '((1 2 3) ...)
-                `(... (,'(1 2 3) ...))))
+(test-equal '((1 2 3) ...)
+                `(... (,'(1 2 3) ...)))
 
-(assert (equal? '(a `(b ,(list 1 2) ... ,(foo 1 3 d) e) f)
-                `(a `(b ,(list 1 2) ... ,(foo ,(list 1 3) ... d) e) f)))
+(test-equal '(a `(b ,(list 1 2) ... ,(foo 1 3 d) e) f)
+                `(a `(b ,(list 1 2) ... ,(foo ,(list 1 3) ... d) e) f))
 
-(assert (equal? '(a 3)
-                `((unquote 'a (+ 1 2)))))
+(test-equal '(a 3)
+                `((unquote 'a (+ 1 2))))
 
-(assert (equal? '(a b c d e f)
-                `((unquote-splicing '(a b c) '(d e f)))))
+(test-equal '(a b c d e f)
+                `((unquote-splicing '(a b c) '(d e f))))
 
-(assert (equal? '((a x 1) (a x 2) (a x 3))
-                `((a ,'((x 1) (x 2) (x 3)) ...) ...)))
+(test-equal '((a x 1) (a x 2) (a x 3))
+                `((a ,'((x 1) (x 2) (x 3)) ...) ...))
 
-(assert (equal? '(1 2 3 4 5 6)
-		`((unquote (list 1 2 3) (list 4 5 6)) ...)))
+(test-equal '(1 2 3 4 5 6)
+		`((unquote (list 1 2 3) (list 4 5 6)) ...))
 
-(assert (equal? '(x 1 x 2 x 3)
-		`(,@'((x 1) (x 2) (x 3)) ...)))
+(test-equal '(x 1 x 2 x 3)
+		`(,@'((x 1) (x 2) (x 3)) ...))
+
+  )
 
 ;; Local Variables:
 ;; mode: scheme
