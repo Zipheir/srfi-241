@@ -31,28 +31,28 @@
 
 (test-group "Dybvig"
 (test-equal 3
-		(match '(a 17 37)
-		  [(a ,x) 1]
-		  [(b ,x ,y) 2]
-		  [(a ,x ,y) 3]))
+                (match '(a 17 37)
+                  [(a ,x) 1]
+                  [(b ,x ,y) 2]
+                  [(a ,x ,y) 3]))
 
 (test-equal 629
-		(match '(a 17 37)
-		  [(a ,x) (- x)]
-		  [(b ,x ,y) (+ x y)]
-		  [(a ,x ,y) (* x y)]))
+                (match '(a 17 37)
+                  [(a ,x) (- x)]
+                  [(b ,x ,y) (+ x y)]
+                  [(a ,x ,y) (* x y)]))
 
 (test-equal '(17 37)
-		(match '(a 17 37) [(a ,x* ...) x*]))
+                (match '(a 17 37) [(a ,x* ...) x*]))
 
 (test-equal '(a stitch in time saves nine)
-		(match '(say (a time) (stitch saves) (in nine))
-		  [(say (,x* ,y*) ...) (append x* y*)]))
+                (match '(say (a time) (stitch saves) (in nine))
+                  [(say (,x* ,y*) ...) (append x* y*)]))
 
 (test-equal '((a e h j) ((b c d) (f g) (i) ()))
-		(match '((a b c d) (e f g) (h i) (j))
-		  [((,x* ,y** ...) ...)
-		   (list x* y**)]))
+                (match '((a b c d) (e f g) (h i) (j))
+                  [((,x* ,y** ...) ...)
+                   (list x* y**)]))
 
 (letrec* ((simple-eval
   (lambda (x)
@@ -65,12 +65,12 @@
       [,x (assertion-violation 'simple-eval "invalid expression" x)]))))
 
 (test-equal 6
-		(simple-eval '(+ 1 2 3)))
+                (simple-eval '(+ 1 2 3)))
 (test-equal 4
-		(simple-eval '(+ (- 0 1) (+ 2 3))))
+                (simple-eval '(+ (- 0 1) (+ 2 3))))
 (test-assert (guard (c
-		[(assertion-violation? c) #t])
-	  (simple-eval '(- 1 2 3)))))
+                [(assertion-violation? c) #t])
+          (simple-eval '(- 1 2 3)))))
 
 (letrec* ((translate
   (lambda (x)
@@ -80,7 +80,7 @@
       [,x (assertion-violation 'translate "invalid expression" x)]))))
 
 (test-equal '((lambda (x y) (+ x y)) 3 4)
-		(translate '(let ((x 3) (y 4)) (+ x y)))))
+                (translate '(let ((x 3) (y 4)) (+ x y)))))
 
 (letrec* ((f
   (lambda (x)
@@ -88,11 +88,11 @@
       [((,a ...) (,b ...)) `((,a . ,b) ...)]))))
 
 (test-equal '((1 . a) (2 . b) (3 . c))
-		(f '((1 2 3) (a b c))))
+                (f '((1 2 3) (a b c))))
 
 (test-assert (guard (c
-		[(assertion-violation? c) #t])
-	  (f '((1 2 3) (a b))))))
+                [(assertion-violation? c) #t])
+          (f '((1 2 3) (a b))))))
 
 (letrec* ((g
   (lambda (x)
@@ -100,8 +100,8 @@
       [(,a ,b ...) `((,a ,b) ...)]))))
 
 (test-assert (guard (c
-		[(assertion-violation? c) #t])
-	  (g '(1 2 3 4)))))
+                [(assertion-violation? c) #t])
+          (g '(1 2 3 4)))))
 
 (letrec* ((h
   (lambda (x)
@@ -111,9 +111,9 @@
          (begin ,e1 ...) ...)]))))
 
 (test-equal '((lambda (x y) (list x y))
-		  (begin (write 'one) 3)
-		  (begin (write 'two) 4))
-		(h '(let ((x (write 'one) 3) (y (write 'two) 4)) (list x y)))))
+                  (begin (write 'one) 3)
+                  (begin (write 'two) 4))
+                (h '(let ((x (write 'one) 3) (y (write 'two) 4)) (list x y)))))
 
 (letrec* ((k
   (lambda (x)
@@ -122,7 +122,7 @@
        `(list (car ,x) ... ...)]))))
 
 (test-equal '(list (car a) (car b) (car c) (car d) (car e) (car f) (car g))
-		(k '(foo (a) (b c d e) () (f g)))))
+                (k '(foo (a) (b c d e) () (f g)))))
 
 (letrec*
  ((parse1
@@ -154,7 +154,7 @@
     (Prog x))))
 
 (test-equal '(begin (set! x 3) (+ x 4))
-		(parse1 '(program (set! x 3) (+ x 4)))))
+                (parse1 '(program (set! x 3) (+ x 4)))))
 
 (letrec*
  ((parse2
@@ -192,12 +192,12 @@
     (Prog x))))
 
 (test-equal '(begin
-		   (let ([if (if x list values)])
-		     (call if 1 2 3)))
-		(parse2
-		 '(program
-		      (let ([if (if x list values)])
-			(if 1 2 3))))))
+                   (let ([if (if x list values)])
+                     (call if 1 2 3)))
+                (parse2
+                 '(program
+                      (let ([if (if x list values)])
+                        (if 1 2 3))))))
 
 (letrec*
  ((split
@@ -210,10 +210,10 @@
                (cons y evens))]))))
 
 (test-equal '((a c e) (b d f))
-		(call-with-values
-		    (lambda ()
-		      (split '(a b c d e f)))
-		  list)))
+                (call-with-values
+                    (lambda ()
+                      (split '(a b c d e f)))
+                  list)))
   )
 
 ;;; Extra tests
