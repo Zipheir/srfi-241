@@ -147,8 +147,8 @@
          [(,[rator] ,[rand*] ...) `(,rator ,rand* ...)]
          [,x (assertion-violation 'parse "invalid expression" x)]))])
 
-  (test-equal '(begin (set! x 3) (+ x 4))
-                  (Prog '(program (set! x 3) (+ x 4)))))
+    (test-equal '(begin (set! x 3) (+ x 4))
+                (Prog '(program (set! x 3) (+ x 4)))))
 
   ;; TODO: More tests of this parser.
   (letrec*
