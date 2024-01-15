@@ -254,6 +254,29 @@
               (match '#((a 1) (b 2) (c 3))
                 [#((,x ,k) ...) (list x k)]
                 [,_ '()]))
+
+  (letrec*
+   ((vector-simple-eval
+     (lambda (x)
+       (match x
+         [,i (guard (integer? i)) i]
+         [#(+ ,[x*] ...) (apply + x*)]
+         [#(* ,[x*] ...) (apply * x*)]
+         [#(- ,[x] ,[y]) (- x y)]
+         [#(/ ,[x] ,[y]) (/ x y)]
+         [,x
+          (assertion-violation 'simple-eval "invalid expression" x)]))))
+
+    (test-equal 6 (vector-simple-eval '#(+ 1 2 3)))
+    (test-equal 4 (vector-simple-eval '#(+ #(- 0 1) #(+ 2 3))))
+    (test-equal 22
+                (vector-simple-eval '#(* #(/ 4 2) #(+ 3 4 #(- 5 1)))))
+    (test-equal 1 (vector-simple-eval '#(+ #(*) #(+))))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (vector-simple-eval '#(- 1 2 3))))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (vector-simple-eval '#(/ #(- 4.3 1) 2)))))
+
   )
 
 ;;; Extra tests
