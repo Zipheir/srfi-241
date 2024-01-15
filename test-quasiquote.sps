@@ -28,47 +28,47 @@
         (srfi :241 match quasiquote))
 
 (test-group "Quasiquote"
-(test-equal '(list 3 4)
-                `(list ,(+ 1 2) 4))
+  (test-equal '(list 3 4)
+              `(list ,(+ 1 2) 4))
 
-(test-equal '(a 3 4 5 6 b)
-                `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b))
+  (test-equal '(a 3 4 5 6 b)
+              `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b))
 
-(test-equal '(a 3 4 5 6 b)
-                `(a ,(+ 1 2) ,(map abs '(4 -5 6)) ... b))
+  (test-equal '(a 3 4 5 6 b)
+              `(a ,(+ 1 2) ,(map abs '(4 -5 6)) ... b))
 
-(test-equal '((1 . a) (2 . b) (3 . c))
-                `((,'(1 2 3) . ,'(a b c)) ...))
+  (test-equal '((1 . a) (2 . b) (3 . c))
+              `((,'(1 2 3) . ,'(a b c)) ...))
 
-(test-equal '(((a x) (a 1)) ((a x) (a 2)) ((a x) (a 3)))
-                `(((a ,'((x 1) (x 2) (x 3))) ...) ...))
+  (test-equal '(((a x) (a 1)) ((a x) (a 2)) ((a x) (a 3)))
+              `(((a ,'((x 1) (x 2) (x 3))) ...) ...))
 
-(test-equal '((a x) (a 1) (a x) (a 2) (a x) (a 3))
-                `((a ,'((x 1) (x 2) (x 3))) ... ...))
+  (test-equal '((a x) (a 1) (a x) (a 2) (a x) (a 3))
+              `((a ,'((x 1) (x 2) (x 3))) ... ...))
 
-(test-equal '((a x 1) (a x 2) (a x 3))
-                `((a ,@'((x 1) (x 2) (x 3))) ...))
+  (test-equal '((a x 1) (a x 2) (a x 3))
+              `((a ,@'((x 1) (x 2) (x 3))) ...))
 
-(test-equal '((1 2 3) ...)
-                `(... (,'(1 2 3) ...)))
+  (test-equal '((1 2 3) ...)
+              `(... (,'(1 2 3) ...)))
 
-(test-equal '(a `(b ,(list 1 2) ... ,(foo 1 3 d) e) f)
-                `(a `(b ,(list 1 2) ... ,(foo ,(list 1 3) ... d) e) f))
+  (test-equal '(a `(b ,(list 1 2) ... ,(foo 1 3 d) e) f)
+              `(a `(b ,(list 1 2) ... ,(foo ,(list 1 3) ... d) e) f))
 
-(test-equal '(a 3)
-                `((unquote 'a (+ 1 2))))
+  (test-equal '(a 3)
+              `((unquote 'a (+ 1 2))))
 
-(test-equal '(a b c d e f)
-                `((unquote-splicing '(a b c) '(d e f))))
+  (test-equal '(a b c d e f)
+              `((unquote-splicing '(a b c) '(d e f))))
 
-(test-equal '((a x 1) (a x 2) (a x 3))
-                `((a ,'((x 1) (x 2) (x 3)) ...) ...))
+  (test-equal '((a x 1) (a x 2) (a x 3))
+              `((a ,'((x 1) (x 2) (x 3)) ...) ...))
 
-(test-equal '(1 2 3 4 5 6)
-                `((unquote (list 1 2 3) (list 4 5 6)) ...))
+  (test-equal '(1 2 3 4 5 6)
+              `((unquote (list 1 2 3) (list 4 5 6)) ...))
 
-(test-equal '(x 1 x 2 x 3)
-                `(,@'((x 1) (x 2) (x 3)) ...))
+  (test-equal '(x 1 x 2 x 3)
+              `(,@'((x 1) (x 2) (x 3)) ...))
 
   )
 
