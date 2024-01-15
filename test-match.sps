@@ -228,6 +228,34 @@
                 [,_ '()]))
   )
 
+(test-group "Vectors + Ellipsis"
+  (test-assert (match '#() [#(,_ ...) #t] [,_ #f]))
+  (test-assert (match '#(1) [#(,_ ...) #t] [,_ #f]))
+  (test-assert (match '#(1) [#(1 ...) #t] [,_ #f]))
+  (test-assert (match '#(1 2 3) [#(1 ...) #f] [,_ #t]))
+  (test-assert (match '#(1 1 3) [#(1 ... 3) #t] [,_ #f]))
+  (test-assert (match '#(1 1 3) [#(1 1 ... 3) #t] [,_ #f]))
+  (test-assert (match '#(1 1 1 1 3) [#(1 1 ... 3) #t] [,_ #f]))
+  (test-assert (match '#(1 1 2 1 3) [#(1 1 ... 3) #f] [,_ #t]))
+
+  (test-equal '(1 1)
+              (match '#(1 1 3)
+                [#(,x ... 3) x]
+                [,_ '()]))
+  (test-equal '(1 2)
+              (match '#(1 2 3)
+                [#(,x ... 3) x]
+                [,_ '()]))
+  (test-equal '(1 2)
+              (match '#(0 1 2 3)
+                [#(0 ,x ... 3) x]
+                [,_ '()]))
+  (test-equal '((a b c) (1 2 3))
+              (match '#((a 1) (b 2) (c 3))
+                [#((,x ,k) ...) (list x k)]
+                [,_ '()]))
+  )
+
 ;;; Extra tests
 
 (test-group "Extra"
