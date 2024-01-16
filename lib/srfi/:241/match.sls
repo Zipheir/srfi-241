@@ -28,6 +28,7 @@
           unquote ... -> guard)
   (import (rnrs (6))
           (rnrs io simple (6))
+          (only (srfi :1 lists) iota span split-at)
           (srfi :39 parameters)
           (srfi :241 match helpers)
           (srfi :241 match matchers)
