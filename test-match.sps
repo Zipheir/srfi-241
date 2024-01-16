@@ -242,6 +242,26 @@
               (match '(1 2)
                 [(,_ ... . ,x) x]  ; final cdr
                 [,_ #f]))
+  (test-equal '(1 (2 2) 3 ())
+              (match '(1 2 2 3)
+                [(,x ,y ... ,z . ,u) (list x y z u)]
+                [,_ '()]))
+  (test-equal '(1 (2 2) 3 4)
+              (match '(1 2 2 3 . 4)
+                [(,x ,y ... ,z . ,u) (list x y z u)]
+                [,_ '()]))
+  (test-equal '(1 () 3 ())
+              (match '(1 3)
+                [(,x ,y ... ,z . ,u) (list x y z u)]
+                [,_ '()]))
+  (test-equal '(1 2 (2) 3 ())
+              (match '(1 2 2 3)
+                [(,x ,y ,z ... ,u . ,v) (list x y z u v)]
+                [,_ '()]))
+  (test-equal '(1 2 (2) 3 4)
+              (match '(1 2 2 3 . 4)
+                [(,x ,y ,z ... ,u . ,v) (list x y z u v)]
+                [,_ '()]))
 
   (test-assert (match '(a)
                  [(,x) (guard (integer? x)) #f]
