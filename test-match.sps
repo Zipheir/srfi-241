@@ -226,6 +226,23 @@
               (match '#(1 2 (3 4))
                 [#(,x ,y (,u ,v)) (list (list v u) y x)]
                 [,_ '()]))
+
+  (letrec*
+   ([binary-vector-eval
+     (lambda (expr)
+       (match expr
+         [,k (guard (number? k)) k]
+         [#(+ ,[a] ,[b]) (+ a b)]
+         [#(- ,[a] ,[b]) (- a b)]
+         [#(* ,[a] ,[b]) (* a b)]
+         [#(/ ,[a] ,[b]) (/ a b)]
+         [,_ (assertion-violation 'binary-vector-eval
+                                  "invalid expression"
+                                  expr)]))])
+    (test-eqv 0 (binary-vector-eval 0))
+    (test-eqv 4 (binary-vector-eval '#(+ 1 3)))
+    (test-eqv 7 (binary-vector-eval '#(+ #(- 7 6) #(/ 12 2))))
+    (test-eqv 6 (binary-vector-eval '#(- #(* 5 6) #(+ 20 #(/ 8 2))))))
   )
 
 (test-group "Vectors + Ellipsis"
@@ -238,6 +255,10 @@
   (test-assert (match '#(1 1 1 1 3) [#(1 1 ... 3) #t] [,_ #f]))
   (test-assert (match '#(1 1 2 1 3) [#(1 1 ... 3) #f] [,_ #t]))
 
+  (test-assert (null? (match '#(1 3) [#(,x ... 1 3) x] [,_ #f])))
+  (test-assert (null? (match '#(1 3) [#(1 ,x ... 3) x] [,_ #f])))
+  (test-assert (null? (match '#(1 3) [#(1 3 ,x ...) x] [,_ #f])))
+
   (test-equal '(1 1)
               (match '#(1 1 3)
                 [#(,x ... 3) x]
@@ -249,6 +270,10 @@
   (test-equal '(1 2)
               (match '#(0 1 2 3)
                 [#(0 ,x ... 3) x]
+                [,_ '()]))
+  (test-equal '((1 1) 3)
+              (match '#(1 1 1 1 3)
+                [#(1 ,x ... 1 ,y) (list x y)]
                 [,_ '()]))
   (test-equal '((a b c) (1 2 3))
               (match '#((a 1) (b 2) (c 3))
