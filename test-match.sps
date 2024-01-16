@@ -207,6 +207,89 @@
                  list)))
   )
 
+(test-group "Lists"
+  (test-assert (match '() [() #t] [,_ #f]))
+  (test-assert (match '(1) [() #f] [,_ #t]))
+  (test-assert (match '(1) [(1 . ()) #t] [,_ #f]))
+  (test-assert (match '(1 2) [(1 . (2)) #t] [,_ #f]))
+  (test-assert (match '(1 . 2) [(1 . (2)) #f] [,_ #t]))
+  (test-assert (match '(1 . 2) [(1 . 2) #t] [,_ #f]))
+
+  (test-assert (match '(3) [(1 ... 3) #t] [,_ #f]))
+  (test-assert (match '(1 3) [(1 ... 3) #t] [,_ #f]))
+  (test-assert (match '(1 1 1 3) [(1 ... 3) #t] [,_ #f]))
+  (test-assert (match '(2 3) [(1 ... 3) #f] [,_ #t]))
+  (test-assert (match '(1 2 3) [(1 2 ... 3) #t] [,_ #f]))
+  (test-assert (match '(1 2 3 4) [(1 2 ... 3) #f] [,_ #t]))
+  (test-assert (match '(1 2 3 4) [(1 2 ... 3 4) #t] [,_ #f]))
+  (test-assert (match '(1 3 4) [(1 2 ... 3 4) #t] [,_ #f]))
+  (test-assert (match '(1 2 2 2 3 4) [(1 2 ... 3 4) #t] [,_ #f]))
+  (test-assert (match '(1 2 2 2 3 4) [(1 2 ... . ,_) #f] [,_ #t]))
+  (test-assert (match '(1 2 2 2 3 . 4) [(1 2 ... 3 . 4) #t] [,_ #f]))
+
+  (test-assert (match '() [((1 ...) ...) #t] [,_ #f]))
+  (test-assert (match '((1)) [((1 ...) ...) #t] [,_ #f]))
+  (test-assert (match '((1 1) (1) ()) [((1 ...) ...) #t] [,_ #f]))
+  (test-assert (match '(((1))) [((1 ...) ...) #f] [,_ #t]))
+  (test-assert (match '(((1) (1 1))) [(((1 ...) ...) ...) #t] [,_ #f]))
+  (test-assert (match '(((1) (1 2))) [(((1 ...) ...) ...) #f] [,_ #t]))
+
+  (test-eqv 1 (match '(1) [(,x) x] [,_ #f]))
+  (test-eqv 6 (match '(3 2) [(,x ,y) (* x y)] [,_ #f]))
+  (test-eqv 6 (match '(3 . 2) [(,x . ,y) (* x y)] [,_ #f]))
+  (test-equal '(2 1) (match '(1 2) [(,x ,y) (list y x)] [,_ '()]))
+  (test-equal '()
+              (match '(1 2)
+                [(,_ ... . ,x) x]  ; final cdr
+                [,_ #f]))
+
+  (test-assert (match '(a)
+                 [(,x) (guard (integer? x)) #f]
+                 [(,x) (guard (symbol? x)) #t]))
+
+  (test-equal '(a b c d)
+              (match '(((a b c d)))
+                [(((,x ...))) x]
+                [,_ '()]))
+  (test-equal '((a b c d))
+              (match '(((a b c d)))
+                [(((,x ...) ...)) x]
+                [,_ '()]))
+  (test-equal '(((a b c d)))
+              (match '(((a b c d)))
+                [(((,x ...) ...) ...) x]
+                [,_ '()]))
+  (test-equal '((a b c) (d e f))
+              (match '((a b c) (d e f))
+                [((,x ...) ...) x]
+                [,_ '()]))
+  (test-equal '((a b c) (d e f))
+              (match '((1 a b c) (1 d e f))
+                [((1 ,x ...) ...) x]
+                [,_ '()]))
+  )
+
+(test-group "Wildcards"
+  ;;; Wildcard patterns. These are invalid in MNW's original matcher.
+
+  (test-assert (match '(1 2) [(,_ ,_) #t] [,_ #f]))
+  (test-assert (match '(1 2) [(,_ . ,_) #t] [,_ #f]))
+  (test-assert (match '(1 2) [(,_ ,_ ,_) #f] [,_ #t]))
+  (test-assert (match '(1 2 3 4) [(,_ ,_ ,_) #f] [,_ #t]))
+  (test-assert (match '(1 2 3 4) [(,_ ,_ ,_ ,_) #t] [,_ #f]))
+
+  (test-equal '(a b c)
+              (match '((1 a m) (2 b n) (3 c o))
+                [((,_ ,x ,_) ...) x]
+                [,_ '()]))
+
+  ;; _ can't be used as a cata variable.
+  (test-assert (guard (c [(assertion-violation? c) #t])
+                 (match '(1 2)
+                   [,k (guard (integer? k)) k]
+                   [(,[_] ,[x]) (+ _ x)])))
+  )
+
 (test-group "Vectors"
   (test-assert (match '#() [#() #t] [,_ #f]))
   (test-assert (match '#(1) [#() #f] [,_ #t]))
