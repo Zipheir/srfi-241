@@ -253,7 +253,7 @@
                              #,(fail-clause))))])
             (matcher-sequence
              glue
-             (generate-glob-matcher #'e1 head-pattern)
+             (generate-star-matcher #'e1 head-pattern)
              (generate-list-matcher #'e2 rest-patterns)))))
 
       ;;; Match the empty list.
@@ -286,7 +286,7 @@
       ;;; Build a matcher for an ellipsized pattern. This generates
       ;;; meta-variables (pattern variables with level > 1) to hold
       ;;; the lists of values matched by *pattern's* variables.
-      (define (generate-glob-matcher expression pattern)
+      (define (generate-star-matcher expression pattern)
         (with-syntax ([(e es loop)
                        (generate-temporaries '(e es loop))])
           (let* ([mat (generate-matcher #'e pattern)]
@@ -330,7 +330,7 @@
                       [(min-length) (+ (length heads) (length tails))])
           (with-syntax ([(ve) (generate-temporaries '(ve))])
             (let ([mat1 (match-vector-left #'ve heads)]
-                  [mat2 (vector-glob-matcher #'ve
+                  [mat2 (vector-star-matcher #'ve
                                              ell-pat
                                              (length heads)
                                              (length tails))]
@@ -361,7 +361,7 @@
       ;;; matched by *pattern*'s variables.
       ;;;
       ;;; FIXME: Simplify this.
-      (define (vector-glob-matcher vector-id
+      (define (vector-star-matcher vector-id
                                    ell-pattern
                                    start
                                    tail-length) ; unmatched tail
