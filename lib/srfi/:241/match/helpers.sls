@@ -24,7 +24,7 @@
 
 (library (srfi :241 match helpers)
   (export make-identifier-hashtable invoke ellipsis? underscore? length+
-          append-n-map fold-right/two-values list/mv)
+          append-n-map fold-right/two-values list/mv check-no-ellipses)
   (import (rnrs))
 
   (define (identifier-hash id)
@@ -82,4 +82,11 @@
     (syntax-rules ()
       [(_ producer)
        (let-values ([vs producer]) vs)]))
+
+  (define (check-no-ellipses who form pattern)
+    (when (if (list? pattern)
+              (exists ellipsis? pattern)
+              (ellipsis? pattern))
+      (syntax-violation who "extra ellipses in pattern"
+                        pattern form)))
   )

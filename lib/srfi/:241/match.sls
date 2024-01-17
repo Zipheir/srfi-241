@@ -156,7 +156,7 @@
           [(head ellipsis body ... . ,x)
            (and (ellipsis? #'ellipsis) (identifier? #'x))
            (begin
-            (check-no-ellipses pattern #'(body ...))
+            (check-no-ellipses who pattern #'(body ...))
             (generate-ellipsis-matcher expression
                                        #'head
                                        #'(body ...)
@@ -164,8 +164,8 @@
           [(head ellipsis body ... . tail)
            (ellipsis? #'ellipsis)
            (begin
-            (check-no-ellipses pattern #'(body ...))
-            (check-no-ellipses pattern #'tail)
+            (check-no-ellipses who pattern #'(body ...))
+            (check-no-ellipses who pattern #'tail)
             (generate-ellipsis-matcher expression
                                        #'head
                                        #'(body ...)
@@ -230,13 +230,6 @@
              glue
              (generate-matcher #'e1 car-pattern)
              (generate-matcher #'e2 cdr-pattern)))))
-
-      (define (check-no-ellipses form pattern)
-        (when (if (list? pattern)
-                  (exists ellipsis? pattern)
-                  (ellipsis? pattern))
-          (syntax-violation who "extra ellipses in pattern"
-                            pattern form)))
 
       (define (generate-ellipsis-matcher expression
                                          head-pattern
