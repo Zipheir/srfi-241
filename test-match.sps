@@ -127,7 +127,7 @@
        (match x
          [(program ,[Stmt -> s*] ... ,[Expr -> e])
           `(begin ,s* ... ,e)]
-         [,x (assertion-violation 'parse "invalid program" x)]))]
+         [,x (assertion-violation 'Prog "invalid program" x)]))]
     [Stmt
      (lambda (x)
        (match x
@@ -136,7 +136,7 @@
          [(set! ,v ,[Expr -> e])
           (guard (symbol? v))
           `(set! ,v ,e)]
-         [,x (assertion-violation 'parse "invalid statement" x)]))]
+         [,x (assertion-violation 'Stmt "invalid statement" x)]))]
     [Expr
      (lambda (x)
        (match x
@@ -145,7 +145,7 @@
          [(if ,[e1] ,[e2] ,[e3])
           `(if ,e1 ,e2 ,e3)]
          [(,[rator] ,[rand*] ...) `(,rator ,rand* ...)]
-         [,x (assertion-violation 'parse "invalid expression" x)]))])
+         [,x (assertion-violation 'Expr "invalid expression" x)]))])
 
     (test-equal '(begin 4) (Prog '(program 4)))
     (test-equal '(begin (if (f x y) (set! z 4) (set! z 5)) z)
@@ -173,7 +173,7 @@
        (match x
          [(program ,[Stmt -> s*] ... ,[(Expr '()) -> e])
           `(begin ,s* ... ,e)]
-         [,x (assertion-violation 'parse "invalid program" x)]))]
+         [,x (assertion-violation 'Prog "invalid program" x)]))]
     [Stmt
      (lambda (x)
        (match x
@@ -182,7 +182,7 @@
          [(set! ,v ,[(Expr '()) -> e])
           (guard (symbol? v))
           `(set! ,v ,e)]
-         [,x (assertion-violation 'parse "invalid statement" x)]))]
+         [,x (assertion-violation 'Stmt "invalid statement" x)]))]
     [Expr
      (lambda (env)
        (lambda (x)
@@ -197,7 +197,7 @@
             `(let ([,v ,e]) ,body)]
            [(,[rator] ,[rand*] ...)
             `(call ,rator ,rand* ...)]
-           [,x (assertion-violation 'parse "invalid expression" x)])))])
+           [,x (assertion-violation 'Expr "invalid expression" x)])))])
 
     (test-equal '(begin 4) (Prog '(program 4)))
     (test-equal '(begin (if (call f x y) (set! z 4) (set! z 5)) z)
