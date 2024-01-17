@@ -27,6 +27,15 @@
         (srfi :64)
         (srfi :241 match))
 
+;;; Test that evaluating *expr* causes an assertion violation.
+(define-syntax test-assertion-violation
+  (syntax-rules ()
+    [(test-assertion-violation expr)
+     (test-assert
+      (guard (c [(assertion-violation? c) #t]
+                [else #f])
+        expr))]))
+
 ;;; Examples from R. Kent Dybvig's "Using Match"
 
 (test-group "Dybvig"
@@ -67,8 +76,7 @@
 
     (test-equal 6 (simple-eval '(+ 1 2 3)))
     (test-equal 4 (simple-eval '(+ (- 0 1) (+ 2 3))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (simple-eval '(- 1 2 3)))))
+    (test-assertion-violation (simple-eval '(- 1 2 3))))
 
   (letrec*
    ((translate
@@ -89,15 +97,13 @@
     (test-equal '((1 . a) (2 . b) (3 . c))
                 (f '((1 2 3) (a b c))))
 
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (f '((1 2 3) (a b))))))
+    (test-assertion-violation (f '((1 2 3) (a b)))))
 
   (letrec* ((g
              (lambda (x)
                (match x
                  [(,a ,b ...) `((,a ,b) ...)]))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (g '(1 2 3 4)))))
+    (test-assertion-violation (g '(1 2 3 4))))
 
   (letrec* ((h
              (lambda (x)
@@ -157,12 +163,10 @@
                    z)))
     (test-equal '(begin ((if z f g) (if a (+ a 2) b)))
                 (Prog '(program ((if z f g) (if a (+ a 2) b)))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (Prog '(program (set! x 3)))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (Prog '(program (set-bang x 3) 4))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (Prog '(program (set! x 3) (set! y 2) 5.2))))
+    (test-assertion-violation (Prog '(program (set! x 3))))
+    (test-assertion-violation (Prog '(program (set-bang x 3) 4)))
+    (test-assertion-violation
+     (Prog '(program (set! x 3) (set! y 2) 5.2)))
     (test-equal '(begin (set! x 3) (+ x 4))
                 (Prog '(program (set! x 3) (+ x 4)))))
 
@@ -219,18 +223,16 @@
                               (even? (+ x v)))
                             1
                             2))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (Prog '(program (set! x 3)))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (Prog '(program (set-bang x 3) 4))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (Prog '(program (set! x 3) (set! y 2) 5.2))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (Prog '(program (let ((if 1)) (if 1 2 3))))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (Prog '(program (let ((let 1))
-                                     (let ((x 2))
-                                       x))))))
+    (test-assertion-violation (Prog '(program (set! x 3))))
+    (test-assertion-violation (Prog '(program (set-bang x 3) 4)))
+    (test-assertion-violation
+     (Prog '(program (set! x 3) (set! y 2) 5.2)))
+    (test-assertion-violation
+     (Prog '(program (let ((if 1)) (if 1 2 3)))))
+    (test-assertion-violation
+     (Prog '(program (let ((let 1))
+                       (let ((x 2))
+                         x)))))
     (test-equal '(begin
                   (let ([if (if x list values)])
                     (call if 1 2 3)))
@@ -259,8 +261,7 @@
     (test-equal '((1) ())
                 (let-values ([vals (split '(1))])
                   vals))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (split '(1 2 3 . 4)))))
+    (test-assertion-violation (split '(1 2 3 . 4))))
   )
 
 (test-group "Lists"
@@ -360,10 +361,10 @@
                 [,_ '()]))
 
   ;; _ can't be used as a cata variable.
-  (test-assert (guard (c [(assertion-violation? c) #t])
-                 (match '(1 2)
-                   [,k (guard (integer? k)) k]
-                   [(,[_] ,[x]) (+ _ x)])))
+  (test-assertion-violation
+   (match '(1 2)
+     [,k (guard (integer? k)) k]
+     [(,[_] ,[x]) (+ _ x)]))
   )
 
 (test-group "Vectors"
@@ -456,10 +457,10 @@
     (test-equal 22
                 (vector-simple-eval '#(* #(/ 4 2) #(+ 3 4 #(- 5 1)))))
     (test-equal 1 (vector-simple-eval '#(+ #(*) #(+))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (vector-simple-eval '#(- 1 2 3))))
-    (test-assert (guard (c [(assertion-violation? c) #t])
-                   (vector-simple-eval '#(/ #(- 4.3 1) 2)))))
+    (test-assertion-violation
+     (vector-simple-eval '#(- 1 2 3)))
+    (test-assertion-violation
+     (vector-simple-eval '#(/ #(- 4.3 1) 2))))
 
   )
 
@@ -473,9 +474,7 @@
   (test-assert (match 'else
                  [else #t]))
 
-  (test-assert (guard (c [(assertion-violation? c) #t])
-                 (match 'whatever
-                   [else #f])))
+  (test-assertion-violation (match 'whatever [else #f]))
   )
 
 ;; Local Variables:
