@@ -224,6 +224,10 @@
              (generate-matcher #'e1 car-pattern)
              (generate-matcher #'e2 cdr-pattern)))))
 
+      ;;; Build a matcher for a list pattern with ellipsis. The input
+      ;;; list is split into a head, which is matched against the
+      ;;; ellipsized head-pattern, and a tail, which is matched against
+      ;;; the concatenated body and tail patterns.
       (define (generate-ellipsis-matcher expression
                                          head-pattern
                                          body-patterns
