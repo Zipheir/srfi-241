@@ -252,7 +252,15 @@
                 (call-with-values
                  (lambda ()
                    (split '(a b c d e f)))
-                 list)))
+                 list))
+    (test-equal '(() ())
+                (let-values ([vals (split '())])
+                  vals))
+    (test-equal '((1) ())
+                (let-values ([vals (split '(1))])
+                  vals))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (split '(1 2 3 . 4)))))
   )
 
 (test-group "Lists"
