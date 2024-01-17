@@ -28,7 +28,7 @@
           unquote ... -> guard)
   (import (rnrs (6))
           (rnrs io simple (6))
-          (only (srfi :1 lists) iota span split-at)
+          (only (srfi :1 lists) iota span)
           (srfi :39 parameters)
           (srfi :241 match helpers)
           (srfi :241 match matchers)
@@ -38,18 +38,6 @@
   (define-syntax ->
     (lambda (form)
       (syntax-violation '-> "invalid use of auxiliary syntax" form)))
-
-  ;;; Split the (im)proper list obj into a head and tail, where the
-  ;;; tail is of cons-length k. Pass these values to succeed, or call
-  ;;; fail with no arguments if k is out of range.
-  (define (split-right/continuations obj k succeed fail)
-    (let ([n (length+ obj)])
-      (if (and n (<= k n))
-          (call-with-values
-              (lambda ()
-                (split-at obj (- n k)))
-            succeed)
-          (fail))))
 
   (define-syntax match
     (lambda (form)

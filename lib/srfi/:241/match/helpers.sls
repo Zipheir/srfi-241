@@ -24,8 +24,10 @@
 
 (library (srfi :241 match helpers)
   (export make-identifier-hashtable invoke ellipsis? underscore? length+
-          append-n-map fold-right/two-values list/mv check-no-ellipses)
-  (import (rnrs))
+          append-n-map fold-right/two-values list/mv check-no-ellipses
+          split-right/continuations)
+  (import (rnrs)
+          (only (srfi :1 lists) split-at))
 
   (define (identifier-hash id)
     (assert (identifier? id))
@@ -89,4 +91,16 @@
               (ellipsis? pattern))
       (syntax-violation who "extra ellipses in pattern"
                         pattern form)))
+
+  ;;; Split the (im)proper list obj into a head and tail, where the
+  ;;; tail is of cons-length k. Pass these values to succeed, or call
+  ;;; fail with no arguments if k is out of range.
+  (define (split-right/continuations obj k succeed fail)
+    (let ([n (length+ obj)])
+      (if (and n (<= k n))
+          (call-with-values
+              (lambda ()
+                (split-at obj (- n k)))
+            succeed)
+          (fail))))
   )
