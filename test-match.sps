@@ -147,6 +147,22 @@
          [(,[rator] ,[rand*] ...) `(,rator ,rand* ...)]
          [,x (assertion-violation 'parse "invalid expression" x)]))])
 
+    (test-equal '(begin 4) (Prog '(program 4)))
+    (test-equal '(begin (if (f x y) (set! z 4) (set! z 5)) z)
+                (Prog
+                 '(program
+                   (if (f x y)
+                       (set! z 4)
+                       (set! z 5))
+                   z)))
+    (test-equal '(begin ((if z f g) (if a (+ a 2) b)))
+                (Prog '(program ((if z f g) (if a (+ a 2) b)))))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (Prog '(program (set! x 3)))))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (Prog '(program (set-bang x 3) 4))))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (Prog '(program (set! x 3) (set! y 2) 5.2))))
     (test-equal '(begin (set! x 3) (+ x 4))
                 (Prog '(program (set! x 3) (+ x 4)))))
 
@@ -183,6 +199,38 @@
             `(call ,rator ,rand* ...)]
            [,x (assertion-violation 'parse "invalid expression" x)])))])
 
+    (test-equal '(begin 4) (Prog '(program 4)))
+    (test-equal '(begin (if (call f x y) (set! z 4) (set! z 5)) z)
+                (Prog
+                 '(program
+                   (if (f x y)
+                       (set! z 4)
+                       (set! z 5))
+                   z)))
+    (test-equal '(begin (call (if z f g) (if a (call + a 2) b)))
+                (Prog '(program ((if z f g) (if a (+ a 2) b)))))
+    (test-equal '(begin (set! x 5)
+                        (if (let ((v 10)) (call even? (call + x v)))
+                            1
+                            2))
+                (Prog '(program
+                        (set! x 5)
+                        (if (let ((v 10))
+                              (even? (+ x v)))
+                            1
+                            2))))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (Prog '(program (set! x 3)))))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (Prog '(program (set-bang x 3) 4))))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (Prog '(program (set! x 3) (set! y 2) 5.2))))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (Prog '(program (let ((if 1)) (if 1 2 3))))))
+    (test-assert (guard (c [(assertion-violation? c) #t])
+                   (Prog '(program (let ((let 1))
+                                     (let ((x 2))
+                                       x))))))
     (test-equal '(begin
                   (let ([if (if x list values)])
                     (call if 1 2 3)))
