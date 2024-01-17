@@ -135,12 +135,6 @@
                              form
                              clause)]))
 
-      (define (ill-formed-match-pattern-violation pattern)
-        (syntax-violation who
-                          "ill-formed match pattern"
-                          form
-                          pattern))
-
       ;;; Translates a pattern and input expression and return a
       ;;; matcher object.
       (define (generate-matcher expression pattern)
@@ -182,8 +176,7 @@
            (generate-pair-matcher expression
                                   #'car-pattern
                                   #'cdr-pattern)]
-          [unquote
-           (ill-formed-match-pattern-violation pattern)]
+          [unquote (syntax-violation who "ill-formed pattern" pattern)]
           [_ (generate-constant-matcher expression pattern)]))
 
       (define (generate-cata-matcher operator expression ids)
