@@ -11,10 +11,9 @@ style, and have made some semantic changes as well.
   anything but is never bound to a value. It can appear any number
   of times in a pattern.
 
-* Only one ellipsis is allowed at each pattern level. SRFI 241 seems to
-  allow ambiguous patterns like `(,x ... ,y ... ,z ...)`, which I think
-  is a serious bug. It may be possible to support a simple form of
-  multi-ellipsis pattern, but it seems best to reject them all, for now.
+* Only one ellipsis is allowed at each pattern level. `match` accepts
+  the same list patterns and vector patterns that are accepted by R7RS
+  `syntax-rules`.
 
 ## License
 
